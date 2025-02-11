@@ -7,19 +7,23 @@
 int main(int argc, char** argv)
 {
     (void)argc;
-    bool show_gui = false;
+    bool show_gui = true;
 
     // Parse arguments.
     while (argv && *argv)
     {
-        if (LITERAL_STREQUAL(*argv, "--gui"))
+        if (LITERAL_STREQUAL(*argv, "--no-gui"))
         {
-            show_gui = true;
+            show_gui = false;
         }
         argv += 1;
     }
 
-    gui g;
-    
-    return g.show();
+    if (show_gui)
+    {
+        gui g;
+        return g.show();
+    }
+
+    return 0;
 }
