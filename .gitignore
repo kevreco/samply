@@ -1,6 +1,8 @@
 # Samply
 imgui.ini
 .vs/
+x64/
+*.user
 # /Samply
 
 # Prerequisites
