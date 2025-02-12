@@ -1,11 +1,47 @@
 #include "gui/gui.hpp"
 
+#if _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #include "string.h"
+
+#include "process.h"
 
 #define LITERAL_STREQUAL(str, literal_str) (strncmp(str, literal_str, sizeof(literal_str) - 1) == 0)
 
+cmd_args get_args_to_run(char** argv);
+
 int main(int argc, char** argv)
 {
+    // If the command line contains "--run" everything after will
+    // run from a child process.
+    // Example:
+    //      samply --run app --with --args
+    // Will run
+    //      app --with --args 
+    // 
+    cmd_args args = get_args_to_run(argv);
+    if (args_are_valid(args))
+    {
+        process p;
+        if (!process_init(&p, args))
+        {
+            return -1;
+        }
+        if (!process_run_async(&p))
+        {
+            return -1;
+        }
+        if (!process_wait(&p))
+        {
+            return -1;
+        }
+    }
+
     (void)argc;
     bool show_gui = true;
 
@@ -27,3 +63,26 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
+#if _WIN32
+
+cmd_args get_args_to_run(char** argv)
+{
+    /* Search the first occurrence of the wide character string. Return null if not found. */
+    wchar_t* cursor = wcswcs(GetCommandLineW(), L"--run");
+
+    /* Skip --run */
+    cursor += wcslen(L"--run"); 
+
+    /* Skip leading whitespace. */
+    while (cursor && iswspace(*cursor))
+    {
+        cursor += 1;
+    }
+
+    return cursor;
+}
+
+#else
+#error "get_args_to_run not supported yet"
+#endif

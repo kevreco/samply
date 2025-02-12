@@ -10,6 +10,4 @@ struct gui {
 	int main();
 };
 
-
-
 #endif // SAMPLY_RENDER_H

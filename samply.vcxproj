@@ -138,13 +138,17 @@
     <ClCompile Include="3rdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="gui\gui.cpp" />
     <ClCompile Include="gui\gui_backend.cpp" />
+    <ClCompile Include="log.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="process.c" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="samply.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gui\gui.hpp" />
+    <ClInclude Include="log.h" />
+    <ClInclude Include="process.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
