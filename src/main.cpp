@@ -76,13 +76,16 @@ cmd_args get_args_to_run(char** argv)
     /* Search the first occurrence of the wide character string. Return null if not found. */
     wchar_t* cursor = wcswcs(GetCommandLineW(), L"--run");
 
-    /* Skip --run */
-    cursor += wcslen(L"--run"); 
-
-    /* Skip leading whitespace. */
-    while (cursor && iswspace(*cursor))
+    if (cursor != NULL)
     {
-        cursor += 1;
+        /* Skip --run */
+        cursor += wcslen(L"--run");
+
+        /* Skip leading whitespace. */
+        while (cursor && iswspace(*cursor))
+        {
+            cursor += 1;
+        }
     }
 
     return cursor;
