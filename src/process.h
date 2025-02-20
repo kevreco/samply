@@ -2,9 +2,6 @@
 #define SAMPLY_PROCESS_H
 
 #if _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
 #include <windows.h>
 #endif
 
@@ -19,6 +16,7 @@ extern "C" {
 typedef wchar_t* cmd_args;
 typedef HANDLE handle;
 typedef DWORD exit_code;
+typedef DWORD64 address;
 
 #else /* UNIX */
 
@@ -29,7 +27,7 @@ struct {
 };
 typedef int handle;
 typedef int exit_code;
-
+typedef size_t address;
 #endif
 
 bool args_are_valid(cmd_args args);
@@ -53,8 +51,8 @@ bool process_is_running(process* p);
 
 void process_stop(process* p);
 
-#endif /* SAMPLY_PROCESS_H */
-
 #if __cplusplus
 }
 #endif
+
+#endif /* SAMPLY_PROCESS_H */

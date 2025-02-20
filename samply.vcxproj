@@ -104,12 +104,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\src\3rdparty\imgui;.\src\3rdparty\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\src\3rdparty\imgui;.\src\3rdparty\imgui\backends;.\src\3rdparty\thread;.\src\3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;Dbghelp.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\3rdparty\3rdparty_impl.c" />
     <ClCompile Include="src\3rdparty\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\3rdparty\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui.cpp" />
@@ -136,19 +137,30 @@
     <ClCompile Include="src\3rdparty\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\report.c" />
     <ClCompile Include="src\gui\gui.cpp" />
     <ClCompile Include="src\gui\gui_backend.cpp" />
     <ClCompile Include="src\log.c" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\process.c" />
+    <ClCompile Include="src\sampler.c" />
+    <ClCompile Include="src\symbol_manager.c" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="samply.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\3rdparty\arena_alloc.h" />
+    <ClInclude Include="src\3rdparty\darrT.h" />
+    <ClInclude Include="src\3rdparty\insert_only_ht.h" />
+    <ClInclude Include="src\3rdparty\strv.h" />
+    <ClInclude Include="src\report.h" />
     <ClInclude Include="src\gui\gui.hpp" />
     <ClInclude Include="src\log.h" />
     <ClInclude Include="src\process.h" />
+    <ClInclude Include="src\sampler.h" />
+    <ClInclude Include="src\samply.h" />
+    <ClInclude Include="src\symbol_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

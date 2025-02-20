@@ -1,15 +1,25 @@
 #include "gui/gui.hpp"
 
 #include "string.h"
+#include "stdio.h"
 
 #include "process.h"
+#include "sampler.h"
+#include "report.h"
 
 #define LITERAL_STREQUAL(str, literal_str) (strncmp(str, literal_str, sizeof(literal_str) - 1) == 0)
 
 cmd_args get_args_to_run(char** argv);
+bool run_process(process* p, sampler* s, report* report);
 
 int main(int argc, char** argv)
 {
+    sampler s;
+    sampler_init(&s);
+    report report;
+    report_init(&report);
+
+    bool no_subprocess_error = true;
     // If the command line contains "--run" everything after will
     // run from a child process.
     // Example:
@@ -21,17 +31,11 @@ int main(int argc, char** argv)
     if (args_are_valid(args))
     {
         process p;
-        if (!process_init(&p, args))
+        if (process_init(&p, args))
         {
-            return -1;
-        }
-        if (!process_run_async(&p))
-        {
-            return -1;
-        }
-        if (!process_wait(&p))
-        {
-            return -1;
+            no_subprocess_error = run_process(&p, &s, &report);
+
+            process_destroy(&p);
         }
     }
 
@@ -52,6 +56,14 @@ int main(int argc, char** argv)
     {
         gui g;
         return g.show();
+    }
+
+    sampler_destroy(&s);
+    report_destroy(&report);
+
+    if ( !no_subprocess_error )
+    {
+        return 1;
     }
 
     return 0;
@@ -79,3 +91,45 @@ cmd_args get_args_to_run(char** argv)
 #else
 #error "get_args_to_run not supported yet"
 #endif
+
+bool run_process(process* p, sampler* s, report* report)
+{
+    if (!process_run_async(p))
+    {
+        return false;
+    }
+
+    sampler_task task = { 0 };
+    task.process = p;
+    sampler_run(s, &task);
+
+    if (!process_wait(p))
+    {
+        return false;
+    }
+
+    /* Load report from sampler. */
+    report_load_from_sampler(report, s);
+
+    /* Display report in std output. */
+    report_print_to_file(report, stdout);
+
+#if 0 /* To test if save/load from/to a file is working. */
+
+    /* Re-display data in std output to check if they actually match. */
+    if (!report_save_to_filepath(report, "test.bin"))
+    {
+        return false;
+    }
+
+    if (!report_load_from_filepath(report, "test.bin"))
+    {
+        return false;
+    }
+    /* Should display the same text as the first "print_to_file" above. */
+    report_print_to_file(report, stdout);
+
+#endif
+
+    return true;
+}

@@ -81,8 +81,6 @@ bool process_wait(process* p)
 		return false;
 	}
 
-	CloseHandle(p->process_handle);
-	CloseHandle(p->thread_handle);
 #else
 #error "process_wait not implemented yet"
 #endif
