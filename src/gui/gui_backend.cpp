@@ -44,7 +44,7 @@ auto icon_name = "samply.ico";
 struct {
     int x, y, width, height;
 } rect = {
-    100, 100, 1280, 800
+    100, 100, 720, 540
 };
 
 // To format wchar_t strings with "tmp_fmt".
