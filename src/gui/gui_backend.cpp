@@ -18,12 +18,16 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <strsafe.h> /* StringCchVPrintfW */
 #include <GL/GL.h>
 //#include <GL/glext.h>
 #include <tchar.h>
 #include "stdio.h"
 
-#define STR(str) L ## str
+#include "samply.h"
+
+#define TO_STR(str) L ## str
+#define STR(str) TO_STR(str)
 
 #else
 
@@ -33,8 +37,7 @@ error "@TODO Handle UNIX-like system"
 
 #endif
 
-auto app_name = STR("Samply Example");
-auto title = STR("Samply (Dear ImGui/Win32/OpenGL3)");
+auto app_name = STR(SMP_APP_NAME);
 auto icon_path = STR("samply.ico");
 auto icon_name = "samply.ico";
 
@@ -43,6 +46,11 @@ struct {
 } rect = {
     100, 100, 1280, 800
 };
+
+// To format wchar_t strings with "tmp_fmt".
+static const int tmp_buffer_MAX = 1024;
+static wchar_t buffer[tmp_buffer_MAX];
+static wchar_t buffer_error[] = L"<error>";
 
 // Data stored per platform window
 struct WGL_WindowData { HDC hDC; };
@@ -54,6 +62,7 @@ static int              g_Width;
 static int              g_Height;
 
 // Forward declarations of helper functions
+static wchar_t* tmp_fmt(const wchar_t* fmt, ...);
 bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
 void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -63,7 +72,6 @@ PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 int gui::show()
 {
-   
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
     WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, app_name, nullptr };
@@ -80,6 +88,11 @@ int gui::show()
     }
 
     ::RegisterClassExW(&wc);
+
+    const wchar_t* title = tmp_fmt(STR("%s %s (%d) (Dear ImGui/Win32/OpenGL3)"),
+        STR(SMP_APP_NAME),
+        STR(SMP_APP_VERSION_TEXT),
+        SMP_APP_VERSION_NUMBER);
 
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, title, WS_OVERLAPPEDWINDOW, rect.x, rect.y, rect.width, rect.height, nullptr, nullptr, wc.hInstance, nullptr);
 
@@ -193,7 +206,23 @@ int gui::show()
     return exit_code;
 }
 
+//
 // Helper functions
+// 
+
+// Return buffer_error in case something went wrong.
+static wchar_t* tmp_fmt(const wchar_t* fmt, ...)
+{
+    va_list valist;
+    va_start(valist, fmt);
+
+    HRESULT h = StringCchVPrintfW(buffer, tmp_buffer_MAX, fmt, valist);
+
+    va_end(valist);
+
+    return h == S_OK ? buffer : buffer_error;
+}
+
 bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
 {
     HDC hDc = ::GetDC(hWnd);

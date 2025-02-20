@@ -1,6 +1,8 @@
 #ifndef SAMPLY_H
 #define SAMPLY_H
 
+#define SMP_APP_NAME "Samply"
+
 /* Version of the application. */
 #define SMP_APP_VERSION_NUMBER (1)
 #define SMP_APP_VERSION_TEXT "0.0.1-dev"
