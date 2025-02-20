@@ -56,7 +56,6 @@ static int              g_Height;
 // Forward declarations of helper functions
 bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
 void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
-void ResetDeviceWGL();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
@@ -74,9 +73,11 @@ int gui::show()
     if (hIcon == NULL)
     {
         fprintf(stderr, "Could not load icon: %s\n", icon_name);
-        return -1;
     }
-    wc.hIcon = hIcon;
+    else
+    {
+        wc.hIcon = hIcon;
+    }
 
     ::RegisterClassExW(&wc);
 
@@ -131,7 +132,7 @@ int gui::show()
     //IM_ASSERT(font != nullptr);
 
     // Our state
-    bool show_demo_window = true;
+
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -164,10 +165,6 @@ int gui::show()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-        // 2
         exit_code = main();
 
         // Rendering
