@@ -2,7 +2,7 @@
 
 #include <stdlib.h> // qsort
 
-#include "imgui_extensions.h"
+#include "imgui_plus_extensions.h"
 
 #include "samply.h"
 #include "report.h"

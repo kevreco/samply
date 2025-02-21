@@ -11,7 +11,7 @@
 // This is provided for completeness, however it is strongly recommended you use OpenGL with SDL or GLFW.
 
 #if _WIN32
-#include "imgui.h"
+#include "imgui_plus_extensions.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_win32.h"
 #ifndef WIN32_LEAN_AND_MEAN
@@ -156,6 +156,8 @@ int gui::show()
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     int exit_code = 0;
+
+    ImGui::ApplyCustomTheme();
 
     // Main loop
     bool done = false;
