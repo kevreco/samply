@@ -202,7 +202,10 @@ int gui::show()
     ImGui::DestroyContext();
 
     // Clean up and free the icon resource
-    DestroyIcon(hIcon);
+    if (hIcon)
+    {
+        DestroyIcon(hIcon);
+    }
 
     CleanupDeviceWGL(hwnd, &g_MainWindow);
     wglDeleteContext(g_hRC);
