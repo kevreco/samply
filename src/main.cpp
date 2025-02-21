@@ -54,7 +54,8 @@ int main(int argc, char** argv)
 
     if (show_gui)
     {
-        gui g;
+        gui g = { &s, &report };
+
         return g.show();
     }
 

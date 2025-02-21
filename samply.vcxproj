@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="src\3rdparty\arena_alloc.h" />
     <ClInclude Include="src\3rdparty\darrT.h" />
+    <ClInclude Include="src\3rdparty\imgui\imgui_extensions.h" />
     <ClInclude Include="src\3rdparty\insert_only_ht.h" />
     <ClInclude Include="src\3rdparty\strv.h" />
     <ClInclude Include="src\report.h" />
