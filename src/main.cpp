@@ -111,7 +111,7 @@ bool run_process(process* p, sampler* s, report* report)
     {
         return false;
     }
-
+    sampler_stop(s);
     /* Load report from sampler. */
     report_load_from_sampler(report, s);
 

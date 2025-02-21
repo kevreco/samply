@@ -58,6 +58,7 @@ bool sampler_run(sampler* s, sampler_task* task)
 void sampler_stop(sampler* s)
 {
 	s->must_end_sampling = true;
+	s->task = 0;
 }
 
 static int sample_thread_procedure(sampler* s)
