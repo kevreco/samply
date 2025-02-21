@@ -49,7 +49,7 @@ namespace ui {
     static void show_report_tab(report* report);
     static void show_report_grid(report* report);
 
-    static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, int items_count);
+    static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count);
     static int report_table_sort(const void* left, const void* right);
 }
 
@@ -341,12 +341,12 @@ namespace ui {
         }
     }
 
-    static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, int items_count)
+    static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count)
     {
         if (items_count > 1)
         {
             cfg.current_sort_specs = sort_specs; // Store in variable accessible by the process_table_sort function.
-            qsort(items, (size_t)items_count, sizeof(items[0]), report_table_sort);
+            qsort(items, items_count, sizeof(items[0]), report_table_sort);
             cfg.current_sort_specs = NULL;
         }
     }
