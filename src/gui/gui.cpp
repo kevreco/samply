@@ -98,9 +98,9 @@ namespace ui {
     //
     static void show_about(bool* p_open)
     {
-        if (ImGui::Begin("About Samply", p_open, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::Begin("About", p_open, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Samply %s (%d)", SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
+            ImGui::Text("%s %s (%d)", SMP_APP_NAME, SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
 
             ImGui::TextLinkOpenURL("Homepage", "https://github.com/kevreco/samply");
             ImGui::SameLine();
@@ -112,7 +112,7 @@ namespace ui {
             ImGui::Separator();
             ImGui::Text("(c) kevreco");
             ImGui::Text("Developed by kevreco.");
-            ImGui::Text("Samply is licensed under the MIT License");
+            ImGui::Text("%s is licensed under the MIT License", SMP_APP_NAME);
             {
                 ImGui::Text("See");
                 ImGui::SameLine();
