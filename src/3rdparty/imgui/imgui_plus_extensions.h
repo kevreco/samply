@@ -111,16 +111,6 @@ namespace ImGui {
 		}
 	};
 
-	static ImVec4 vec4_lerp(ImVec4 a, ImVec4 b, float t)
-	{
-		return ImVec4(
-			(a.x + (b.x - a.x) * t),
-			(a.y + (b.y - a.y) * t),
-			(a.z + (b.z - a.z) * t),
-			(a.w + (b.w - a.w) * t)
-		);
-	}
-
 	static vec3 vec3_lerp(vec3 a, vec3 b, float t)
 	{
 		return vec3(
@@ -154,10 +144,6 @@ namespace ImGui {
 		return ImVec4(x, y, z, w);
 	}
 
-	static ImVec4 vec4_plus_vec4(ImVec4 a, ImVec4 b)
-	{
-		return ImVec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
-	}
 	static vec3 vec3_plus_vec3(vec3 a, vec3 b)
 	{
 		return  vec3(a.x + b.x, a.y + b.y, a.z + b.z);

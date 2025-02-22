@@ -387,9 +387,6 @@ ht_init(ht* h,
 
     h->sizeof_bucket = bucket_entry_size;
 
-    if (initial_capacity < 0)
-        initial_capacity = 0;
-
     if (initial_capacity)
     {
         ht_size_t bucket_capacity = initial_capacity * bucket_entry_size;
