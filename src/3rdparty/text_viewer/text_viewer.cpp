@@ -2020,7 +2020,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::CPlusPlus(
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = true;
-		langDef.mAutoIndentation = true;
 
 		langDef.mName = "C++";
 
@@ -2092,7 +2091,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::HLSL()
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = true;
-		langDef.mAutoIndentation = true;
 
 		langDef.mName = "HLSL";
 
@@ -2141,7 +2139,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::GLSL()
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = true;
-		langDef.mAutoIndentation = true;
 
 		langDef.mName = "GLSL";
 
@@ -2207,7 +2204,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::C()
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = true;
-		langDef.mAutoIndentation = true;
 
 		langDef.mName = "C";
 
@@ -2271,7 +2267,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::SQL()
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = false;
-		langDef.mAutoIndentation = false;
 
 		langDef.mName = "SQL";
 
@@ -2321,7 +2316,6 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::AngelScrip
 		langDef.mSingleLineComment = "//";
 
 		langDef.mCaseSensitive = true;
-		langDef.mAutoIndentation = true;
 
 		langDef.mName = "AngelScript";
 

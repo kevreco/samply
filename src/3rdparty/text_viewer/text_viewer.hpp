@@ -145,7 +145,6 @@ public:
 		Identifiers mPreprocIdentifiers;
 		std::string mCommentStart, mCommentEnd, mSingleLineComment;
 		char mPreprocChar;
-		bool mAutoIndentation;
 
 		TokenizeCallback mTokenize;
 
@@ -154,7 +153,7 @@ public:
 		bool mCaseSensitive;
 
 		LanguageDefinition()
-			: mPreprocChar('#'), mAutoIndentation(true), mTokenize(nullptr), mCaseSensitive(true)
+			: mPreprocChar('#'), mTokenize(nullptr), mCaseSensitive(true)
 		{
 		}
 
