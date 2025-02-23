@@ -144,6 +144,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\process.c" />
     <ClCompile Include="src\sampler.c" />
+    <ClCompile Include="src\string_store.c" />
     <ClCompile Include="src\symbol_manager.c" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +162,7 @@
     <ClInclude Include="src\process.h" />
     <ClInclude Include="src\sampler.h" />
     <ClInclude Include="src\samply.h" />
+    <ClInclude Include="src\string_store.h" />
     <ClInclude Include="src\symbol_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

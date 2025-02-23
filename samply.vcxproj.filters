@@ -75,7 +75,10 @@
     <ClCompile Include="src\symbol_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\process_snapshot.c">
+    <ClCompile Include="src\3rdparty\3rdparty_impl.c">
+      <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="src\string_store.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\3rdparty\3rdparty_impl.c">
@@ -118,10 +121,15 @@
     <ClInclude Include="src\3rdparty\insert_only_ht.h">
       <Filter>Header Files\3rdparty</Filter>
     </ClInclude>
-    <ClInclude Include="src\process_snapshot.h">
+    <ClInclude Include="src\samply.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\samply.h">
+    <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

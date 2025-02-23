@@ -14,11 +14,14 @@ bool run_process(process* p, sampler* s, report* report);
 
 int main(int argc, char** argv)
 {
+    string_store store;
+    string_store_init(&store);
     sampler s;
-    sampler_init(&s);
+    sampler_init(&s, &store);
     report report;
-    report_init(&report);
+    report_init(&report, &store);
 
+    int exit_code = 0;
     bool no_subprocess_error = true;
     // If the command line contains "--run" everything after will
     // run from a child process.
@@ -56,18 +59,20 @@ int main(int argc, char** argv)
     {
         gui g = { &s, &report };
 
-        return g.show();
+        // @TODO do not return since resources must be destroyed.
+        exit_code = g.show();
     }
 
     sampler_destroy(&s);
     report_destroy(&report);
+    string_store_destroy(&store);
 
     if ( !no_subprocess_error )
     {
-        return 1;
+        exit_code = 1;
     }
 
-    return 0;
+    return exit_code;
 }
 
 #if _WIN32

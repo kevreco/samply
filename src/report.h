@@ -8,6 +8,7 @@
 #include "darrT.h"
 #include "arena_alloc.h"
 #include "sampler.h" /* record */
+#include "string_store.h"
 
 #if __cplusplus
 extern "C" {
@@ -27,6 +28,7 @@ typedef darrT(summed_record) summed_records;
 
 typedef struct report report;
 struct report {
+	string_store* string_store;
 
 	size_t sample_count;
 	/* Contains struct of records sorted by name then by count. */
@@ -42,7 +44,7 @@ struct report {
 	re_arena arena;
 };
 
-void report_init(report* r);
+void report_init(report* r, string_store* s);
 void report_destroy(report* r);
 
 /* Reset allocated buffers without deallocating them. */

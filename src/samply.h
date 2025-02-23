@@ -16,4 +16,26 @@
 #define SMP_ASSERT   assert
 #endif
 
+#include "strv.h"
+
+static inline size_t samply_djb2_hash(strv str)
+{
+
+#define SMP_HASH_INIT (5381)
+#define SMP_HASH(h, c) ((((h) << 5) + (h)) + (c))
+
+	size_t hash = SMP_HASH_INIT;
+	size_t i = 0;
+	while (i < str.size)
+	{
+		hash = SMP_HASH(hash, str.data[i]);
+		i += 1;
+	}
+
+	return hash;
+
+#undef SMP_HASH_INIT
+#undef SMP_HASH
+}
+
 #endif /* SAMPLY_H */

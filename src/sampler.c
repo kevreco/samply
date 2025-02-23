@@ -12,10 +12,10 @@ static ht_hash_t hash_pointer(record* item);
 static bool items_are_same(record* left, record* right);
 static void items_swap(record* left, record* right);
 
-void sampler_init(sampler* s)
+void sampler_init(sampler* s, struct string_store* store)
 {
 	memset(s, 0, sizeof(sampler));
-	symbol_manager_init(&s->mgr);
+	symbol_manager_init(&s->mgr, store);
 
 	s->thread = thread_create(sample_thread_procedure, s, THREAD_STACK_SIZE_DEFAULT);
 

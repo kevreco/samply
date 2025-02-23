@@ -61,7 +61,7 @@ struct sampler {
 	symbol_manager mgr;
 };
 
-void sampler_init(sampler* s);
+void sampler_init(sampler* s, struct string_store* store);
 
 /* Stop sampling and wait for the thread to be finished. */
 int sampler_destroy(sampler* s);

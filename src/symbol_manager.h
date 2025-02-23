@@ -27,15 +27,15 @@ typedef darrT(module) modules;
 
 typedef struct symbol_manager symbol_manager;
 struct symbol_manager {
+	struct string_store* string_store;
 	handle process_handle;
 	modules modules;
-	re_arena arena;
 #if _WIN32
 	char* symbol_buffer;
 #endif
 };
 
-void symbol_manager_init(symbol_manager* m);
+void symbol_manager_init(symbol_manager* m, struct string_store* s);
 void symbol_manager_destroy(symbol_manager* m);
 void symbol_manager_clear(symbol_manager* m);
 

@@ -4,15 +4,14 @@
 
 #include "samply.h"
 #include "log.h"
+#include "string_store.h"
 
-void symbol_manager_init(symbol_manager* m)
+void symbol_manager_init(symbol_manager* m, struct string_store* s)
 {
 	memset(m, 0, sizeof(symbol_manager));
 
+	m->string_store = s;
 	darrT_init(&m->modules);
-
-	int chunk_min_capacity = 4 * 1024;
-	re_arena_init(&m->arena, chunk_min_capacity);
 
 #if _WIN32
 	// From the MSDN documentation:
@@ -20,14 +19,14 @@ void symbol_manager_init(symbol_manager* m)
 	// The buffer for PSYMBOL_INFO must be large enough to contain the large symbol name.
 	// However, when I use the example provided the buffer is not large enough
 	// so I rounded up to 4096 and everything is working fine now.
-	m->symbol_buffer = re_arena_alloc(&m->arena, 4 * 1024);
+	m->symbol_buffer = malloc(4 * 1024);
 #endif
 }
 
 void symbol_manager_destroy(symbol_manager* m)
 {
 	darrT_destroy(&m->modules);
-	re_arena_destroy(&m->arena);
+	free(m->symbol_buffer);
 }
 
 #if _WIN32
@@ -83,16 +82,9 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 		return unknown_symbol;
 	}
 
-	void* mem = re_arena_alloc(&m->arena, pSymbol->NameLen);
-	SMP_ASSERT(mem && "Out of memory?");
-	if (!mem)
-	{
-		log_error("Could not allocated memory for symbol at address: %p", addr);
-		exit(1);
-	}
-
-	memcpy(mem, pSymbol->Name, pSymbol->NameLen);
-	return strv_make_from(mem, pSymbol->NameLen);
+	strv symbol = strv_make_from(pSymbol->Name, pSymbol->NameLen);
+	strv* s = string_store_get_or_create(m->string_store, symbol);
+	return *s;
 #else
 #error "symbol_manager_get_symbol_name not implemented yet"
 #endif
@@ -105,8 +97,6 @@ void symbol_manager_clear(symbol_manager* m)
 	{
 		log_error("Could not cleanup symbols");
 	}
-
-	re_arena_clear(&m->arena);
 #else
 #error "symbol_manager_clear not implemented yet"
 #endif

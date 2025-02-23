@@ -59,9 +59,11 @@ static void read_uint64(FILE* f, uint64_t* v);
 static void write_strv(FILE* f, strv str);
 static void read_strv(FILE* f, re_arena* a, strv* str);
 
-void report_init(report* r)
+void report_init(report* r, string_store* s)
 {
 	memset(r, 0, sizeof(report));
+
+	r->string_store = s;
 
 	darrT_init(&r->records_by_name);
 	darrT_init(&r->summary_by_count);
