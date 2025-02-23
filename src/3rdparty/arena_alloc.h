@@ -248,8 +248,13 @@ RE_AA_API re_arena_state
 re_arena_save_state(re_arena* a)
 {
     re_arena_state state;
-    state.chunk = a->last;
-    state.size = a->last->size;
+    memset(&state, 0, sizeof(re_arena_state));
+
+    if (a->last)
+    {
+        state.chunk = a->last;
+        state.size = a->last->size;
+    }
     return state;
 }
 
