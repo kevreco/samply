@@ -206,7 +206,6 @@ public:
 	int GetTotalLines() const { return (int)mLines.size(); }
 	bool IsOverwrite() const { return mOverwrite; }
 
-	bool IsReadOnly() const { return mReadOnly; }
 	bool IsTextChanged() const { return mTextChanged; }
 	bool IsCursorPositionChanged() const { return mCursorPositionChanged; }
 
@@ -299,7 +298,6 @@ private:
 
 	int mTabSize;
 	bool mOverwrite;
-	bool mReadOnly;
 	bool mWithinRender;
 	bool mScrollToCursor;
 	bool mScrollToTop;
