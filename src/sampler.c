@@ -145,11 +145,11 @@ static enum sample_result get_sample(sampler* s)
 
 	/* @TODO retrieve symbol name after sampling. */
 	/* @TODO retrieve module name. */
-	/* @TODO retrieve source file name. */
-	/* @TODO retrieve line number. */
 	if (inserted->symbol_name.size == 0) 
 	{
 		inserted->symbol_name = symbol_manager_get_symbol_name(&s->mgr, addr);
+
+		symbol_manager_get_location(&s->mgr, addr, &inserted->source_file, &inserted->line_number);
 	}
 
 #endif

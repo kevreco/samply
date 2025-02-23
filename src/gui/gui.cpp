@@ -44,13 +44,20 @@ namespace ui {
     static void show_main_window(report* report);
     static void show_full_screen_window_body(report* report);
 
-    // Main Window - report Tab
+    // Main Window - Report Tab
     //
     static void show_report_tab(report* report);
+
+    // Main Window - Report Tab - Grid
+    //
     static void show_report_grid(report* report);
 
     static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count);
     static int report_table_sort(const void* left, const void* right);
+
+    // Main Window - Report Tab - Source File
+    //
+    static void show_source_file(record* records, size_t count);
 }
 
 namespace ui {
@@ -244,7 +251,17 @@ namespace ui {
         {
             ImGui::BeginChild("Bottom", ImVec2(0, 0), ImGuiChildFlags_AlwaysUseWindowPadding);
 
-            ImGui::Text("@TODO Display source code of selected file here.");
+            // This is only for debugging purpose
+            {
+                ImGui::Text("@TODO Display source code of selected file here.");
+                if (report->records.size)
+                {
+                    size_t limit = 200;
+                    size_t max = report->records.size < 200 ? report->records.size : 200;
+
+                    show_source_file(report->records.data, max);
+                }
+            }
 
             ImGui::EndChild();
         }
@@ -258,6 +275,9 @@ namespace ui {
         report_table_column_FILE,
         report_table_column_COUNT
     };
+
+    // Main Window - Report Tab - Grid
+    //
 
     static void show_report_grid(report* report)
     {
@@ -399,6 +419,18 @@ namespace ui {
         if (left->counter > right->counter)
             return 1;
         return 0;
+    }
+
+    // Main Window - Report Tab - Source file
+    //
+
+    static void show_source_file(record* records, size_t count)
+    {
+        for (size_t i = 0; i < count; i += 1)
+        {
+            record r = records[i];
+            ImGui::Text("line: %zu - %p " STRV_FMT " - " STRV_FMT " ", r.line_number, r.address, STRV_ARG(r.symbol_name), STRV_ARG(r.source_file));
+        }
     }
 };
 

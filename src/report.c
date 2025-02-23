@@ -41,11 +41,9 @@ struct summary_binary_header_v1 {
 	uint64_t total_entry_count;
 };
 
-static bool record_by_name_then_by_count_predicate_less(record* left, record* right);
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right);
 
-static void update_sorted_records_with(report* r, record* rec);
-static size_t djb2_hash(strv str);
+static void upsert_record(report* r, record* rec);
 
 static void update_summary_with(report* r, record* rec);
 static int compare_summed_record(summed_record* left, summed_record* right);
@@ -65,8 +63,8 @@ void report_init(report* r, string_store* s)
 
 	r->string_store = s;
 
-	darrT_init(&r->records_by_name);
 	darrT_init(&r->summary_by_count);
+	multi_mapT_init(&r->records);
 
 	size_t min_chunk_capacity = 4 * 1024;
 	re_arena_init(&r->arena, min_chunk_capacity);
@@ -74,16 +72,18 @@ void report_init(report* r, string_store* s)
 
 void report_destroy(report* r)
 {
-	darrT_destroy(&r->records_by_name);
 	darrT_destroy(&r->summary_by_count);
+
+	multi_mapT_init(&r->records);
 
 	re_arena_destroy(&r->arena);
 }
 
 void report_clear(report* r)
 {
-	darrT_clear(&r->records_by_name);
 	darrT_clear(&r->summary_by_count);
+	
+	multi_mapT_clear(&r->records);
 
 	re_arena_clear(&r->arena);
 }
@@ -166,23 +166,22 @@ void report_load_from_sampler(report* r, sampler* s)
 	ht_cursor c;
 	ht_cursor_init(&s->results, &c);
 
-	int totel_counter_check = 0;
-	int i = 0;
+	size_t total_counter_check = 0;
+
 	while (ht_cursor_next(&c))
 	{
 		record* item = ht_cursor_item(&c);
 
-		update_sorted_records_with(r, item);
 		update_summary_with(r, item);
+		upsert_record(r, item);
 
-		totel_counter_check += item->counter;
-		i += 1;
+		total_counter_check += item->counter;
 	}
 
-	/* Second iteration to popul*/
+	/* Sort entries by counters. */
 	qsort(r->summary_by_count.data, r->summary_by_count.size, sizeof(summed_record), compare_summed_record);
 
-	SMP_ASSERT(totel_counter_check == s->sample_count);
+	SMP_ASSERT(total_counter_check == s->sample_count);
 }
 
 bool report_load_from_filepath(report* r, const char* filepath)
@@ -242,53 +241,62 @@ void report_load_from_file(report* r, FILE* f)
 	}
 }
 
-static bool record_by_name_then_by_count_predicate_less(record* left, record* right)
-{
-	return left->counter < right->counter;
-}
 
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right)
 {
 	return  left->symbol_hash < right->symbol_hash;
 }
 
-static void update_sorted_records_with(report* r, record* rec)
+static bool record_predicate_less(record* left, record* right)
 {
-	darrT_insert_one_sorted(record, &r->records_by_name, *rec, record_by_name_then_by_count_predicate_less);
+	// Sort by source file, then by symbol name then by address. 
+
+	int cmp = strv_lexicagraphical_compare(left->source_file, right->source_file);
+	if (cmp != 0)
+		return cmp < 0;
+
+	cmp = strv_lexicagraphical_compare(left->symbol_name, right->symbol_name);
+	if (cmp != 0)
+		return cmp < 0;
+
+	return left->address < right->address;
 }
 
-static size_t djb2_hash(strv str)
+static void upsert_record(report* r, record* rec)
 {
+	record line = *rec;
+	size_t index = multip_mapT_lower_bound(&r->records, line, record_predicate_less);
 
-#define SMP_HASH_INIT (5381)
-#define SMP_HASH(h, c) ((((h) << 5) + (h)) + (c))
-
-	size_t hash = SMP_HASH_INIT;
-	size_t i = 0;
-	while (i < str.size)
+	/* Item has been found if the index is within the array, and the item queried is not equal to the item at the index*/
+	bool found = index != r->records.size
+		&& (!record_predicate_less(&line, &r->records.data[index]));
+	
+	/* If the item already exist we merge the counters. */
+	if (found)
 	{
-		hash = SMP_HASH(hash, str.data[i]);
-		i += 1;
+		r->records.data[index].counter += rec->counter;
 	}
-
-	return hash;
-
-#undef SMP_HASH_INIT
-#undef SMP_HASH
+	else
+	{
+		darrT_insert_many(&r->records, index, &line, 1);
+	}
 }
 
 static void update_summary_with(report* r, record* rec)
 {
 	summed_record init = { 0 };
-	init.symbol_hash = djb2_hash(rec->symbol_name);
+	init.symbol_hash = samply_djb2_hash(rec->symbol_name);
 	init.symbol_name = rec->symbol_name;
-
+	init.module_name = rec->module_name;
+	init.source_file_name = rec->source_file;
+	
 	summed_record* result = 0;
 	darrT_get_or_insert(&r->summary_by_count, init, result, summed_record_by_count_predicate_less);
 	result->counter += rec->counter;
 }
 
-static int compare_summed_record(summed_record* left, summed_record* right)
+//typedef int(__cdecl* _CoreCrtNonSecureSearchSortCompareFunction)(void const*, void const*);
+static int __cdecl compare_summed_record(summed_record* left, summed_record* right)
 {
 	if (left->counter < right->counter)
 		return 1;

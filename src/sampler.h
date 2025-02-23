@@ -29,10 +29,12 @@ struct sampler_task {
 
 typedef struct record record;
 struct record {
-	strv symbol_name; /* Function name. */
-	address address;  /* Address. */
-	int line_number;  /* Line number associated with the address. */
-	int counter;      /* Count number of time this address has been sampled. */
+	address address;     /* Address. */
+	strv symbol_name;    /* Function name. */
+	strv module_name;    /* Module name. */
+	strv source_file;    /* Source file associated with the address. */
+	size_t line_number;  /* Line number associated with the address. */
+	size_t counter;      /* Count number of time this address has been sampled. */
 };
 
 typedef struct sampler sampler;

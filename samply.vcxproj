@@ -155,6 +155,7 @@
     <ClInclude Include="src\3rdparty\darrT.h" />
     <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h" />
     <ClInclude Include="src\3rdparty\insert_only_ht.h" />
+    <ClInclude Include="src\3rdparty\multi_mapT.h" />
     <ClInclude Include="src\3rdparty\strv.h" />
     <ClInclude Include="src\report.h" />
     <ClInclude Include="src\gui\gui.hpp" />

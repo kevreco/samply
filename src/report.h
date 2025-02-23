@@ -6,6 +6,7 @@
 
 #include "strv.h"
 #include "darrT.h"
+#include "multi_mapT.h"
 #include "arena_alloc.h"
 #include "sampler.h" /* record */
 #include "string_store.h"
@@ -24,6 +25,7 @@ struct summed_record {
 };
 
 typedef darrT(record) records;
+typedef multi_mapT(record) sorted_records;
 typedef darrT(summed_record) summed_records;
 
 typedef struct report report;
@@ -31,15 +33,16 @@ struct report {
 	string_store* string_store;
 
 	size_t sample_count;
-	/* Contains struct of records sorted by name then by count. */
-	/* @TODO this is not used yet.. */
-	records records_by_name;
+
 	/* Contains struct of (function name, number of sample), sorted by count:
 			func1 425
 			func2 11
 	*/
 	summed_records summary_by_count;
+	/* Array of record stored by filename, then symbol name, then by address. */
+	sorted_records records;
 
+	/* TODO use string store instead of this arena, to allocate strings loaded from files. */
 	/* Arena to allocate data when loaded from a file. */
 	re_arena arena;
 };

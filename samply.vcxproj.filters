@@ -127,6 +127,7 @@
     <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\3rdparty\multi_mapT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\string_store.h">

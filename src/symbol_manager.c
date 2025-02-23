@@ -46,6 +46,9 @@ BOOL CALLBACK EnumModules(
 void symbol_manager_load(symbol_manager* m, handle process_handle)
 {
 #if _WIN32
+
+	SymSetOptions(SYMOPT_LOAD_LINES);
+
 	if (!SymInitialize(process_handle, NULL, TRUE))
 	{
 		/* @TODO Get string from GetLastError and display it. */
@@ -65,8 +68,8 @@ void symbol_manager_load(symbol_manager* m, handle process_handle)
 #endif
 }
 
-static strv unknown_symbol = STRV("<unknown-symbol>");
-static strv out_of_mem_symbol = STRV("<out-of-memory>");
+static strv unknown_symbol = STRV("~unknown-symbol~");
+static strv out_of_mem_symbol = STRV("~out-of-memory~");
 
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 {
@@ -88,6 +91,28 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 #else
 #error "symbol_manager_get_symbol_name not implemented yet"
 #endif
+}
+
+static strv unknown_location = STRV("~unknown-location~");
+
+void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number)
+{
+	DWORD displacement = 0;
+	IMAGEHLP_LINE64 line;
+	line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+	if (SymGetLineFromAddr64(m->process_handle, addr, &displacement, &line))
+	{
+		strv filepath = strv_make_from_str(line.FileName);
+		strv* s = string_store_get_or_create(m->string_store, filepath);
+		*source_file = *s;
+		*line_number = line.LineNumber;
+	}
+	else
+	{
+		*source_file = unknown_location;
+		*line_number = 0;
+	}
 }
 
 void symbol_manager_clear(symbol_manager* m)

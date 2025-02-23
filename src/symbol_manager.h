@@ -45,6 +45,9 @@ void symbol_manager_load(symbol_manager* m, handle process_handle);
 /* Get symbol name from the process loaded by symbol_manager_load. */
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr);
 
+/* Get location (source file and line number) from address. */
+void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number);
+
 #if __cplusplus
 }
 #endif
