@@ -135,8 +135,6 @@ namespace ui {
     //
     static void show_main_window(report* report)
     {
-        bool use_work_area = false;
-        
         // Main windows always stayed buried behind all other windows.
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus;
 
@@ -149,7 +147,6 @@ namespace ui {
             // Remove border
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-            use_work_area = true;
             // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
             // Based on your use case you may want one or the other.
             const ImGuiViewport* viewport = ImGui::GetMainViewport();
