@@ -28,6 +28,12 @@
     <Filter Include="Header Files\3rdparty">
       <UniqueIdentifier>{715858e7-f21b-45ea-b65a-d054c25c61be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\text_viewer">
+      <UniqueIdentifier>{06df349c-7c84-4c96-8198-6351336d0edd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rdparty\text_viewer">
+      <UniqueIdentifier>{2fdd459e-708f-4e20-b433-4f7d4a355892}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdparty\imgui\backends\imgui_impl_opengl3.cpp">
@@ -81,8 +87,8 @@
     <ClCompile Include="src\string_store.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\3rdparty\3rdparty_impl.c">
-      <Filter>Source Files\3rdparty</Filter>
+    <ClCompile Include="src\3rdparty\text_viewer\text_viewer.cpp">
+      <Filter>Source Files\3rdparty\text_viewer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +138,9 @@
     </ClInclude>
     <ClInclude Include="src\string_store.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rdparty\text_viewer\text_viewer.hpp">
+      <Filter>Header Files\text_viewer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

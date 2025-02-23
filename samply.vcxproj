@@ -137,6 +137,7 @@
     <ClCompile Include="src\3rdparty\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\3rdparty\text_viewer\text_viewer.cpp" />
     <ClCompile Include="src\report.c" />
     <ClCompile Include="src\gui\gui.cpp" />
     <ClCompile Include="src\gui\gui_backend.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="src\3rdparty\insert_only_ht.h" />
     <ClInclude Include="src\3rdparty\multi_mapT.h" />
     <ClInclude Include="src\3rdparty\strv.h" />
+    <ClInclude Include="src\3rdparty\text_viewer\text_viewer.hpp" />
     <ClInclude Include="src\report.h" />
     <ClInclude Include="src\gui\gui.hpp" />
     <ClInclude Include="src\log.h" />

@@ -4,6 +4,8 @@
 
 #include "imgui_plus_extensions.h"
 
+#include "text_viewer/text_viewer.hpp"
+
 #include "samply.h"
 #include "report.h"
 
@@ -27,6 +29,7 @@ struct config {
 
 static config cfg;
 
+static TextEditor text_viewer;
 // Forward function declarations
 
 namespace ui {
@@ -423,6 +426,9 @@ namespace ui {
 
     static void show_source_file(record* records, size_t count)
     {
+        text_viewer.SetText("Hello");
+        text_viewer.Render("TextViewer Title");
+
         for (size_t i = 0; i < count; i += 1)
         {
             record r = records[i];

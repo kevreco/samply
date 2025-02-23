@@ -40,3 +40,4 @@ The codebase is MIT and is using those components:
 - [imgui](https://github.com/ocornut/imgui) (MIT license)
 - samply.ico from [Kirill Kazachek](https://creativemarket.com/kirill.kazachek) (CC BY 4.0 license)
 - [thread.h](https://github.com/mattiasgustavsson/libs/blob/main/thread.h) (dual MIT and Public Domain license)
+- [text_viewier.hpp] has been created from [ImGuiColorTextEdit](https://github.com/BalazsJako/ImGuiColorTextEdit) (MIT license)
