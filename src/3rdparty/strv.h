@@ -266,7 +266,7 @@ strv_lexicagraphical_compare(strv left, strv right)
         left_char = *left.data++;
         right_char = *right.data++;
         if (left_char != right_char)
-            return left_char < right_char ? 1 : -1;
+            return left_char < right_char ? -1 : 1;
     };
 
     if (left.size < right.size)
