@@ -126,6 +126,16 @@ RE_AA_API void* re_arena_alloc(re_arena* a, size_t byte_size);
 /* Debug print some internal values. */
 RE_AA_API void re_arena_debug_print(re_arena* a);
 
+typedef struct re_arena_state re_arena_state;
+struct re_arena_state {
+    re_chunk* chunk;
+    size_t size;
+};
+
+/* Save where we are (int which chunk and at which position) in case we want to rollback. */
+RE_AA_API re_arena_state re_arena_save_state(re_arena* a);
+RE_AA_API void re_arena_rollback_state(re_arena* a, re_arena_state s);
+
 #endif /* RE_ARENA_ALLOC_H */
 
 #ifdef RE_AA_IMPLEMENTATION
@@ -234,6 +244,31 @@ re_arena_debug_print(re_arena* a)
     printf("arena: block count: %zu, total size: %zu, total capacity : %zu \n", chunk_count, total_size, total_capacity);
 }
 
+RE_AA_API re_arena_state
+re_arena_save_state(re_arena* a)
+{
+    re_arena_state state;
+    state.chunk = a->last;
+    state.size = a->last->size;
+    return state;
+}
+
+RE_AA_API void
+re_arena_rollback_state(re_arena* a, re_arena_state state)
+{
+    state.chunk->size = state.size;
+
+    re_chunk* c = state.chunk->next;
+    
+    while (c)
+    {
+        c->size = 0;
+        c = c->next;
+    }
+
+    a->last = state.chunk;
+}
+
 #include "stdio.h"
 
 static re_chunk*
@@ -265,8 +300,7 @@ alloc_chunk(size_t byte_size)
 #else
 
     /* Default malloc */
-//    data = (char*)RE_AA_MALLOC(byte_size);
-    data = malloc(byte_size);
+    data = (char*)RE_AA_MALLOC(byte_size);
     if (data == NULL)
     {
         RE_AA_ASSERT(0 && "malloc failed.");
@@ -274,18 +308,18 @@ alloc_chunk(size_t byte_size)
     }
    
     /* Adjust alignment if necessary. */
-//#ifdef RE_AA_ALIGNMENT
-//
-//    char* aligned_memory = (char*)align_up((size_t)data, RE_AA_ALIGNMENT);
-//    
-//    RE_AA_ASSERT(aligned_memory >= data);
-//
-//    alignment_offset = aligned_memory - data;
-//
-//    RE_AA_ASSERT(alignment_offset >= 0);
-//
-//    data = data + alignment_offset;
-//#endif
+#ifdef RE_AA_ALIGNMENT
+
+    char* aligned_memory = (char*)align_up((size_t)data, RE_AA_ALIGNMENT);
+    
+    RE_AA_ASSERT(aligned_memory >= data);
+
+    alignment_offset = aligned_memory - data;
+
+    RE_AA_ASSERT(alignment_offset >= 0);
+
+    data = data + alignment_offset;
+#endif
 
 #endif
     /* Construct the block. */
@@ -349,8 +383,6 @@ align_up(size_t v, size_t byte_alignment)
 static size_t
 compute_capacity_to_allocate(re_arena* a, size_t byte_size)
 {
-    //byte_size += RE_AA_SIZEOF_CHUNK_ALIGNED;
-
     byte_size = align_up(byte_size, RE_AA_ALIGNMENT);
 
     /* The chunk itself is part of the allocated memory so we add it to the byte_size. */
