@@ -379,7 +379,7 @@ namespace ui {
             // We could also choose to identify columns based on their index (sort_spec->ColumnIndex), which is simpler!
             const ImGuiTableColumnSortSpecs* sort_spec = &cfg.current_sort_specs->Specs[n];
             int delta = 0;
-            switch (sort_spec->ColumnUserID)
+            switch (sort_spec->ColumnIndex)
             {
                 // Sort by percentage is equivalent to sort by counter.
             case report_table_column_PERCENT:
