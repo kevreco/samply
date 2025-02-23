@@ -30,8 +30,6 @@ public:
 		Background,
 		Cursor,
 		Selection,
-		ErrorMarker,
-		Breakpoint,
 		LineNumber,
 		CurrentLineFill,
 		CurrentLineFillInactive,
@@ -44,19 +42,6 @@ public:
 		Normal,
 		Word,
 		Line
-	};
-
-	struct Breakpoint
-	{
-		int mLine;
-		bool mEnabled;
-		std::string mCondition;
-
-		Breakpoint()
-			: mLine(-1)
-			, mEnabled(false)
-		{
-		}
 	};
 
 	// Represents a character coordinate from the user's point of view,
@@ -129,8 +114,6 @@ public:
 	typedef std::string String;
 	typedef std::unordered_map<std::string, Identifier> Identifiers;
 	typedef std::unordered_set<std::string> Keywords;
-	typedef std::map<int, std::string> ErrorMarkers;
-	typedef std::unordered_set<int> Breakpoints;
 	typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
 	typedef uint8_t Char;
 
