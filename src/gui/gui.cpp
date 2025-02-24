@@ -15,6 +15,7 @@ struct config {
     //
     bool open_main_window_full_screen = true;
     bool open_imgui_demo_window = false;
+    bool open_text_viewer_demo_window = false;
 
     // About
     //
@@ -29,7 +30,7 @@ struct config {
 
 static config cfg;
 
-static TextEditor text_viewer;
+static tv::text_viewer text_viewer;
 // Forward function declarations
 
 namespace ui {
@@ -88,7 +89,8 @@ namespace ui {
                 if (ImGui::BeginMenu("Debug"))
                 {
                     ImGui::Checkbox("Show ImGui Demo Window", &cfg.open_imgui_demo_window);
-                  
+                    ImGui::Checkbox("Show Text Viewer Demo Window", &cfg.open_text_viewer_demo_window);
+
                     ImGui::Checkbox("'Fullscreen' Main Window", &cfg.open_main_window_full_screen);
                     ImGui::EndMenu();
                 }
@@ -208,57 +210,54 @@ namespace ui {
     static void show_report_tab(report* report)
     {
         const ImGuiStyle& style = ImGui::GetStyle();
+        float splitter_width = 8.0f;
         auto avail_size = ImGui::GetContentRegionAvail();
 
         static float horiz_split_pos = avail_size.y / 2.0f; // Position the splitter at the third of the area.
 
-        float min_pos = 0 + style.WindowPadding.y;
-        float max_pos = avail_size.y - (style.WindowPadding.y * 2);
-        if (max_pos < min_pos)
-            max_pos = min_pos;
-
-        ImGui::SplitterHorizontal(8.0f, &horiz_split_pos, min_pos, max_pos, avail_size.x);
+        ImGui::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
         {
             ImGui::BeginChild("Top", ImVec2(avail_size.x, horiz_split_pos));
-
+            
             avail_size = ImGui::GetContentRegionAvail();
-
-            float min_pos_ = 0 + style.WindowPadding.x;
-            float max_pos_ = avail_size.x - (style.WindowPadding.x * 2);
-            if (max_pos_ < min_pos_)
-                max_pos_ = min_pos;
-
+            
             static float vertical_split_pos = avail_size.x / 3; // Position the splitter at the third of the area.
-
-            ImGui::SplitterVertical(8.0f, &vertical_split_pos, min_pos_, max_pos_, avail_size.y);
+            
+            ImGui::SplitterVertical(splitter_width, &vertical_split_pos, 0, avail_size.x, avail_size.y);
             // Top Left
             {
                 ImGui::BeginChild("TopLeft", ImVec2(vertical_split_pos, avail_size.y));
                     
                 ImGui::Text("@TODO list of report file here.");
-
+            
                 ImGui::EndChild();
             }
+            
             ImGui::SameLine();
             // Top Right
             {
                 show_report_grid(report);
             }
-           
+            
             ImGui::EndChild();
         }
-            
+        // Dummy to add some padding and avoid the following window overlapping the splitter.
+        // I'm not sure why it's necessary.
+        ImGui::Dummy(ImVec2(0,0));
         {
-            ImGui::BeginChild("Bottom", ImVec2(0, 0), ImGuiChildFlags_AlwaysUseWindowPadding);
+            // We want the left side to take as much space as possible.
+            float expand_y = -FLT_MIN;
+            // We want to keep a margin to display the information line the selected line, position, selection etc.
+            float expand_x_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
+            ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle);
 
             // This is only for debugging purpose
             {
-                ImGui::Text("@TODO Display source code of selected file here.");
                 if (report->records.size)
                 {
                     size_t limit = 200;
                     size_t max = report->records.size < 200 ? report->records.size : 200;
-
+            
                     show_source_file(report->records.data, max);
                 }
             }
@@ -426,8 +425,29 @@ namespace ui {
 
     static void show_source_file(record* records, size_t count)
     {
-        text_viewer.SetText("Hello");
-        text_viewer.Render("TextViewer Title");
+        std::string txt = R"(#include <stdio.h>
+
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+
+int main() {
+    int number;
+
+    scanf("%d", &number);
+
+    if (number < 0) {
+        printf("Factorial is not defined for negative numbers.\n");
+    } else {
+        printf("Factorial of %d is %d\n", number, factorial(number));
+    }
+
+    return 0;
+})";
+
+        text_viewer.set_text(txt);
+        text_viewer.render();
 
         for (size_t i = 0; i < count; i += 1)
         {
@@ -453,6 +473,11 @@ int gui::main()
     if (cfg.open_imgui_demo_window)
     {
         ImGui::ShowDemoWindow(&cfg.open_imgui_demo_window);
+    }
+
+    if (cfg.open_text_viewer_demo_window)
+    {
+        tv::show_demo_window(&cfg.open_text_viewer_demo_window);
     }
 
     return 0;

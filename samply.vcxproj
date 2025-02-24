@@ -138,6 +138,7 @@
     <ClCompile Include="src\3rdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\3rdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\3rdparty\text_viewer\text_viewer.cpp" />
+    <ClCompile Include="src\3rdparty\text_viewer\text_viewer_demo.cpp" />
     <ClCompile Include="src\report.c" />
     <ClCompile Include="src\gui\gui.cpp" />
     <ClCompile Include="src\gui\gui_backend.cpp" />
