@@ -63,9 +63,9 @@ static int              g_Height;
 
 // Forward declarations of helper functions
 static wchar_t* tmp_fmt(const wchar_t* fmt, ...);
-bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
-void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
+static void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
+static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
@@ -233,7 +233,7 @@ static wchar_t* tmp_fmt(const wchar_t* fmt, ...)
     return h == S_OK ? buffer : buffer_error;
 }
 
-bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
+static bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
 {
     HDC hDc = ::GetDC(hWnd);
     PIXELFORMATDESCRIPTOR pfd = { 0 };
@@ -256,7 +256,7 @@ bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
     return true;
 }
 
-void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data)
+static void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data)
 {
     wglMakeCurrent(nullptr, nullptr);
     ::ReleaseDC(hWnd, data->hDC);
@@ -270,7 +270,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
 // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
 // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
