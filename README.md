@@ -43,6 +43,14 @@ The next step is to display the number/percentage of samples next to each text l
 - Remove .sln file and build with use cb.h
 - Implement Linux version once the Windows version is usable.
 
+## Why?
+
+- I wanted to use a sampling profiler on Windows and Linux, but I could not find any that were cross-platform.
+This is an attempt to solve my problem.
+- While not cross platform, I looked at [Very Sleepy](https://github.com/VerySleepy/verysleepy). Unfortunately, it required an installer.
+I tried to compile it to avoid the installer, however there was more than 600 MB of dependency for wxWidget.
+Which is why I settled with Dear ImGui as a lightweight alternative.
+
 ## Credits and licences
 
 The codebase is MIT and is using those components:
