@@ -22,6 +22,16 @@ Sample count: 247989
 0.00    106     RtlFindCharInUnicodeString
 ```
 
+## GUI - Example
+
+This is a working in progress but here what it will roughly look like.
+The function name with number of samples on top right.
+And we should be able to open the associated file in the panel at the bottom.
+
+![WIP](docs/screenshot.png)
+
+The next step is to display the number/percentage of samples next to each text line.
+
 ## TODO
 
 - [./] Display summary in terminal.
