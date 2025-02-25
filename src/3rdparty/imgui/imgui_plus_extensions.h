@@ -16,6 +16,13 @@ namespace ImGui {
     {
         IM_ASSERT(min_position <= max_position);
 
+		// [kevreco] Not sure why but when the splitter it at zero it's as if there was no splitter at all.
+		if (min_position <= 0)
+			min_position = 0.1f;
+
+		// Add margin equal to the size of the splitter bar.
+		max_position -= axis == ImGuiAxis_X ? bb .GetWidth() : bb.GetHeight();
+
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = g.CurrentWindow;
 
@@ -26,9 +33,6 @@ namespace ImGui {
         // to allow caller of SplitterBehavior() to call SetItemAllowOverlap() after the item.
         // Nowadays we would instead want to use SetNextItemAllowOverlap() before the item.
         ImGuiButtonFlags button_flags = ImGuiButtonFlags_FlattenChildren;
-#ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        button_flags |= ImGuiButtonFlags_AllowOverlap;
-#endif
 
         bool hovered, held;
         ImRect bb_interact = bb;
@@ -168,8 +172,10 @@ namespace ImGui {
 		auto main_green = to_vec3(0.561f, 0.737f, 0.733f);
 		auto main = main_green;
 		auto main_alpha_20 = 0.20f;
+		(void)main_alpha_20;
 		auto main_alpha_35 = 0.35f;
 		auto main_alpha_50 = 0.50f;
+		(void)main_alpha_50;
 		auto main_alpha_70 = 0.70f;
 		auto background = to_vec3(0.263f, 0.298f, 0.369f);  // "Polar Night"
 		auto background2 = to_vec3(0.369f, 0.506f, 0.675f);
@@ -237,6 +243,8 @@ namespace ImGui {
 		colors[ImGuiCol_NavWindowingHighlight] = to_vec4(1.00f, 1.00f, 1.00f, 0.70f);
 		colors[ImGuiCol_NavWindowingDimBg] = to_vec4(background, 0.50f);
 		colors[ImGuiCol_ModalWindowDimBg] = to_vec4(background, 0.60f);
+        
+        style.DisabledAlpha               = 0.70f;
     }
 }
 
