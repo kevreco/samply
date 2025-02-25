@@ -35,10 +35,10 @@ The next step is to display the number/percentage of samples next to each text l
 ## TODO
 
 - [./] Display summary in terminal.
-- Display summary in GUI.
-    - Use a table and make it sortable.
+- [./] Display summary in GUI.
+    - [./] Use a table and make it sortable.
+- [./] Create (more or less lightweight) Text Viewer for Dear ImGui.
 - Display detailed result in GUI.
-    - Use a table and make it sortable.
     - Display source code associated to the specific symbol.
 - Remove .sln file and build with use cb.h
 - Implement Linux version once the Windows version is usable.
