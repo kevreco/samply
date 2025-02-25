@@ -79,7 +79,7 @@ namespace ImGui {
         return held;
     }
 
-    static bool SplitterVertical(float thickness, float* pos, float min_pos, float max_pos, float splitter_long_axis_size = -1.0f)
+	inline bool SplitterVertical(float thickness, float* pos, float min_pos, float max_pos, float splitter_long_axis_size = -1.0f)
     {
         using namespace ImGui;
         ImGuiContext* g = GetCurrentContext();
@@ -91,7 +91,7 @@ namespace ImGui {
         return SplitterBehavior(bb, id, ImGuiAxis_X, pos, min_pos, max_pos, 0.0f);
     }
 
-    static bool SplitterHorizontal(float thickness, float* pos, float min_pos, float max_pos, float splitter_long_axis_size = -1.0f)
+	inline bool SplitterHorizontal(float thickness, float* pos, float min_pos, float max_pos, float splitter_long_axis_size = -1.0f)
     {
         using namespace ImGui;
         ImGuiContext* g = GetCurrentContext();
@@ -149,7 +149,7 @@ namespace ImGui {
 		return  vec3(a.x + b.x, a.y + b.y, a.z + b.z);
 	}
 
-    static void ApplyCustomTheme()
+    inline void ApplyCustomTheme()
     {
 		ImGuiStyle& style = ImGui::GetStyle();
 		auto colors = style.Colors;
