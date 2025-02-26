@@ -8,7 +8,7 @@
 namespace tv {
 
 static const char* line_ending_N = "\n";
-static const char* line_ending_R = "\n";
+static const char* line_ending_R = "\r";
 static const char* line_ending_RN = "\r\n";
 static const char* line_ending_NONE = "";
 
