@@ -128,6 +128,8 @@ namespace tv
 
 		// Render something before displaying the line text.
 		line_prelude_renderer line_prelude = default_line_prelude_renderer;
+		// User data to use in the line_prelude_renderer.
+		void* line_prelude_user_data = 0;
 	};
 }
 
