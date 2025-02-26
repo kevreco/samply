@@ -92,6 +92,8 @@ EXAMPLE:
 #endif
 #endif
 
+#include "stddef.h" /* ptrdiff_t */
+
 #define RE_AA_SIZEOF_CHUNK_ALIGNED (align_up(sizeof(re_chunk), RE_AA_ALIGNMENT))
 
 typedef struct re_chunk re_chunk;
@@ -126,6 +128,8 @@ RE_AA_API void* re_arena_alloc(re_arena* a, size_t byte_size);
 /* Debug print some internal values. */
 RE_AA_API void re_arena_debug_print(re_arena* a);
 
+RE_AA_API size_t re_arena_allocated_chunk_count(re_arena* a);
+
 typedef struct re_arena_state re_arena_state;
 struct re_arena_state {
     re_chunk* chunk;
@@ -144,7 +148,8 @@ RE_AA_API void re_arena_rollback_state(re_arena* a, re_arena_state s);
 #include <stdio.h>
 
 static re_chunk* alloc_chunk(size_t byte_size);
-static void free_chunk(re_chunk* b);
+static void free_chunk(re_chunk* c);
+static void clear_chunk(re_chunk* c);
 
 static size_t is_power_of_two(size_t v);
 static size_t align_up(size_t v, size_t byte_alignment);
@@ -154,7 +159,7 @@ RE_AA_API void
 re_arena_init(re_arena* a, size_t chunk_min_capacity)
 {
     RE_AA_ASSERT(is_power_of_two(chunk_min_capacity));
-    RE_AA_ASSERT(chunk_min_capacity > 0);
+    RE_AA_ASSERT(chunk_min_capacity > sizeof(re_arena));
 
     memset(a, 0, sizeof(re_arena));
     a->chunk_min_capacity = chunk_min_capacity;
@@ -163,11 +168,11 @@ re_arena_init(re_arena* a, size_t chunk_min_capacity)
 RE_AA_API void
 re_arena_destroy(re_arena* a)
 {
-    re_chunk* b = a->first;
-    while (b)
+    re_chunk* c = a->first;
+    while (c)
     {
-        re_chunk* to_free = b;
-        b = b->next;
+        re_chunk* to_free = c;
+        c = c->next;
         free_chunk(to_free);
     }
     a->first = NULL;
@@ -177,12 +182,11 @@ re_arena_destroy(re_arena* a)
 RE_AA_API void
 re_arena_clear(re_arena* a)
 {
-    re_chunk* b = a->first;
-    while (b)
+    re_chunk* c = a->first;
+    while (c)
     {
-        /* The size of the chunk is the initial allocated value. */
-        b->size = RE_AA_SIZEOF_CHUNK_ALIGNED + b->alignment_offset;
-        b = b->next;
+        clear_chunk(c);
+        c = c->next;
     }
 
     a->last = a->first;
@@ -232,17 +236,33 @@ re_arena_debug_print(re_arena* a)
     size_t total_size = 0;
     size_t total_capacity = 0;
 
-    re_chunk* b = a->first;
-    while (b)
+    re_chunk* c = a->first;
+    while (c)
     {
         chunk_count += 1;
-        total_size += b->size;
-        total_capacity += b->capacity;
-        b = b->next;
+        total_size += c->size;
+        total_capacity += c->capacity;
+        c = c->next;
     }
 
     printf("arena: block count: %zu, total size: %zu, total capacity : %zu \n", chunk_count, total_size, total_capacity);
 }
+
+RE_AA_API size_t
+re_arena_allocated_chunk_count(re_arena* a)
+{
+    size_t chunk_count = 0;
+
+    re_chunk* c = a->first;
+    while (c)
+    {
+        chunk_count += 1;
+        c = c->next;
+    }
+
+    return chunk_count;
+}
+
 
 RE_AA_API re_arena_state
 re_arena_save_state(re_arena* a)
@@ -250,28 +270,39 @@ re_arena_save_state(re_arena* a)
     re_arena_state state;
     memset(&state, 0, sizeof(re_arena_state));
 
-    if (a->last)
+    if (!a->last)
+    {
+        state.chunk = a->last;
+        state.size = 0;
+    }
+    else
     {
         state.chunk = a->last;
         state.size = a->last->size;
     }
+
     return state;
 }
 
 RE_AA_API void
 re_arena_rollback_state(re_arena* a, re_arena_state state)
 {
-    state.chunk->size = state.size;
+    if (!state.chunk)
+    {
+        re_arena_clear(a);
+        return;
+    }
 
     re_chunk* c = state.chunk->next;
     
     while (c)
     {
-        c->size = 0;
+        clear_chunk(c);
         c = c->next;
     }
 
     a->last = state.chunk;
+    a->last->size = state.size;
 }
 
 #include "stdio.h"
@@ -328,40 +359,47 @@ alloc_chunk(size_t byte_size)
 
 #endif
     /* Construct the block. */
-    re_chunk* b = (re_chunk*)data;
-    b->alignment_offset = alignment_offset;
-    b->next = NULL;
+    re_chunk* c = (re_chunk*)data;
+    c->alignment_offset = alignment_offset;
+    c->next = NULL;
     /* Block is instanciated within the allocated memory. So we count it as allocated memory. */
-    b->size = RE_AA_SIZEOF_CHUNK_ALIGNED + b->alignment_offset;
-    b->capacity = byte_size;
+    c->size = RE_AA_SIZEOF_CHUNK_ALIGNED + c->alignment_offset;
+    c->capacity = byte_size;
 
-    return b;
+    return c;
 }
 
 static void
-free_chunk(re_chunk* b)
+free_chunk(re_chunk* c)
 {
 #ifdef RE_AA_VIRTUAL_ALLOC
 #ifdef _WIN32
-    if (b != NULL || b != INVALID_HANDLE_VALUE)
+    if (c != NULL || c != INVALID_HANDLE_VALUE)
     {
-        if (!VirtualFree((LPVOID)b, b->capacity, MEM_RELEASE))
+        if (!VirtualFree((LPVOID)c, c->capacity, MEM_RELEASE))
         {
             RE_AA_ASSERT(0 && "VirtualFree() failed.");
         }
     }
 #else
-    int ret = munmap(b, b->capacity);
+    int ret = munmap(c, c->capacity);
     RE_AA_ASSERT(ret == 0);
 #endif
 
 #else
     /* NOTE: Alignment_offset is 0 if RE_AA_ALIGNMENT is not enabled */
-    char* ptr = (char*)b;
-    RE_AA_FREE(ptr - b->alignment_offset);
+    char* ptr = (char*)c;
+    RE_AA_FREE(ptr - c->alignment_offset);
 #endif
 }
 
+static void clear_chunk(re_chunk* c)
+{
+    /* The size of the chunk is the initial allocated value. */
+    c->size = RE_AA_SIZEOF_CHUNK_ALIGNED + c->alignment_offset;
+}
+
+/* Next power of two if it's not already one. */
 static size_t
 next_power_of_two(size_t x) {
     if (x <= 1) return 1;
@@ -386,16 +424,16 @@ align_up(size_t v, size_t byte_alignment)
 }
 
 static size_t
-compute_capacity_to_allocate(re_arena* a, size_t byte_size)
+compute_capacity_to_allocate(re_arena* a, size_t min_required_byte_size)
 {
-    byte_size = align_up(byte_size, RE_AA_ALIGNMENT);
+    min_required_byte_size = align_up(min_required_byte_size, RE_AA_ALIGNMENT);
 
     /* The chunk itself is part of the allocated memory so we add it to the byte_size. */
-    byte_size += RE_AA_SIZEOF_CHUNK_ALIGNED;
+    min_required_byte_size += RE_AA_SIZEOF_CHUNK_ALIGNED;
 
     /* Increase capacity until it fits the allocated bytes.*/
     size_t capacity_to_allocate = a->chunk_min_capacity;
-    while (byte_size >= capacity_to_allocate)
+    while (capacity_to_allocate < min_required_byte_size)
     {
         capacity_to_allocate *= 2;
     }
