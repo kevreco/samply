@@ -261,6 +261,7 @@ namespace ui {
     enum report_table_column {
         report_table_column_PERCENT,
         report_table_column_COUNTER,
+        report_table_column_FILE_ICON,
         report_table_column_SYMBOL,
         report_table_column_MODULE,
         report_table_column_FILE,
@@ -296,6 +297,7 @@ namespace ui {
         } columns[report_table_column_COUNT] = {
             { "%",       ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide },
             { "Counter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending },
+            { ICON_LC_FILE_CODE,   ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort },
             { "Symbol",  0 },
             { "Module",  0 },
             { "File",    0 },
@@ -350,15 +352,51 @@ namespace ui {
                     ImGui::SameLine();
                 }
                 
+                static strv unknown_file_location = STRV("<unknown-file-location>");
+                static strv unknown_symbol = STRV("<unknown-symbol>");
+                static strv unknown_module= STRV("<unknown-module>");
+
+                bool has_file = item.source_file_name.size > 0;
+                strv file =  item.source_file_name.size ? item.source_file_name : unknown_file_location;
+                strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
+                strv mobule = item.module_name.size ? item.module_name : unknown_module;
+
                 ImGui::Text("%.2f", (double)item.counter * inverse_items_count);
-                ImGui::TableSetColumnIndex(1);
-                ImGui::Text("%zu", item.counter);
-                ImGui::TableSetColumnIndex(2);
-                ImGui::Text(STRV_FMT, STRV_ARG(item.symbol_name));
-                ImGui::TableSetColumnIndex(3);
-                ImGui::Text(STRV_FMT, STRV_ARG(item.module_name));
-                ImGui::TableSetColumnIndex(4);
-                ImGui::Text(STRV_FMT, STRV_ARG(item.source_file_name));
+
+                // Display counter
+                {
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%zu", item.counter);
+                }
+
+                // Display icon.
+                {
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text(has_file ? ICON_LC_FILE_CODE : ICON_LC_X);
+
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+                    {
+                        ImGui::SetTooltip(STRV_FMT, STRV_ARG(file));
+                    }
+                }
+
+                // Display symbol name.
+                {
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::Text(STRV_FMT, STRV_ARG(symbol));
+                }
+
+                // Display module name.
+                {
+                    ImGui::TableSetColumnIndex(4);
+                    ImGui::Text(STRV_FMT, STRV_ARG(mobule));
+                }
+
+                // Display file name.
+                {
+                    ImGui::TableSetColumnIndex(5);
+                    ImGui::Text(STRV_FMT, STRV_ARG(file) );
+                }
             }
             ImGui::EndTable();
         }

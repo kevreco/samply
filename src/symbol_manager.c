@@ -72,9 +72,6 @@ void symbol_manager_load(symbol_manager* m, handle process_handle)
 #endif
 }
 
-static strv unknown_symbol = STRV("~unknown-symbol~");
-static strv out_of_mem_symbol = STRV("~out-of-memory~");
-
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 {
 #if _WIN32
@@ -86,7 +83,7 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 
 	if (!SymFromAddr(m->process_handle, addr, &dwDisplacement, pSymbol))
 	{
-		return unknown_symbol;
+		return (strv)STRV("");
 	}
 
 	strv symbol = strv_make_from(pSymbol->Name, pSymbol->NameLen);
@@ -96,8 +93,6 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 #error "symbol_manager_get_symbol_name not implemented yet"
 #endif
 }
-
-static strv unknown_location = STRV("~unknown-location~");
 
 void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number)
 {
@@ -114,7 +109,7 @@ void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_f
 	}
 	else
 	{
-		*source_file = unknown_location;
+		*source_file = (strv)STRV("");
 		*line_number = 0;
 	}
 }

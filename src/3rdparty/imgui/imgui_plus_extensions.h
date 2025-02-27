@@ -1,11 +1,16 @@
 #ifndef IMGUI_PLUS_EXTENSIONS_H
 #define IMGUI_PLUS_EXTENSIONS_H
 
+//
+// NOTE: This file is not part of imgui.
+//
+
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #include "imgui_internal.h"
 
-// NOTE: This file is not part of imgui.
+#define SMP_ICONS_FONT "./lucide.ttf"
+#include "IconFontCppHeader/IconsLucid.h"
 
 namespace ImGui {
 
@@ -246,6 +251,20 @@ namespace ImGui {
         
         style.DisabledAlpha               = 0.70f;
     }
+
+	static inline void MergeIconFont()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->AddFontDefault();
+
+		// Merge in icons from Font Awesome
+		static const ImWchar icons_ranges[] = { ICON_MIN_LC, ICON_MAX_16_LC, 0 };
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.GlyphOffset.y = 4.0f;
+		io.Fonts->AddFontFromFileTTF(SMP_ICONS_FONT, 14.0f, &icons_config, icons_ranges);
+		io.Fonts->Build();
+	}
 }
 
 #endif // IMGUI_PLUS_EXTENSIONS_H

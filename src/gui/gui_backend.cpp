@@ -122,7 +122,8 @@ int gui::show()
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+    ImGui::ApplyCustomTheme();
+    ImGui::MergeIconFont();
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_InitForOpenGL(hwnd);
@@ -150,8 +151,7 @@ int gui::show()
 
     int exit_code = 0;
 
-    ImGui::ApplyCustomTheme();
-
+   
     // Main loop
     bool done = false;
     while (!done)
