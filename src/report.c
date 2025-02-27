@@ -28,6 +28,7 @@ frame 0..N | -------------------
 		   | 5) module name data      | ...
 		   | 6) source file name size | uint64
 		   | 7) source file name data | ...
+		   | 8) line number           | ...
 */
 
 typedef struct summary_binary_header_v1 summary_binary_header_v1;
@@ -42,6 +43,9 @@ struct summary_binary_header_v1 {
 };
 
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right);
+static bool record_by_file_predicate_less(record* left, record* right);
+/* Sort by source file, then by line number, then by address. */
+static bool record_predicate_less(record* left, record* right);
 
 static void upsert_record(report* r, record* rec);
 
@@ -60,7 +64,6 @@ static void read_strv(FILE* f, re_arena* a, strv* str);
 void report_init(report* r)
 {
 	memset(r, 0, sizeof(report));
-
 
 	darrT_init(&r->summary_by_count);
 	multi_mapT_init(&r->records);
@@ -153,6 +156,8 @@ void report_save_to_file(report* r, FILE* f)
 		/* 6) source file name size */
 		/* 7) source file name data */
 		write_strv(f, item.source_file_name);
+		/* 8) line number */
+		write_uint64(f, item.line_number);
 	}
 }
 
@@ -239,29 +244,32 @@ void report_load_from_file(report* r, FILE* f)
 		/* 6) source file name size */
 		/* 7) source file name data */
 		read_strv(f, &r->arena, &item.source_file_name);
-	
+		/* 8) line number */
 		read_uint64(f, &item.line_number);
+		
 		darrT_push_back(summed_record , &r->summary_by_count, item);
 	}
 }
-
 
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right)
 {
 	return  left->symbol_hash < right->symbol_hash;
 }
 
+static bool record_by_file_predicate_less(record* left, record* right)
+{
+	return strv_lexicagraphical_compare(left->source_file, right->source_file) < 0;
+}
+
+/* Sort by source file, then by line number, then by address. */
 static bool record_predicate_less(record* left, record* right)
 {
-	// Sort by source file, then by symbol name then by address. 
-
 	int cmp = strv_lexicagraphical_compare(left->source_file, right->source_file);
 	if (cmp != 0)
 		return cmp < 0;
 
-	cmp = strv_lexicagraphical_compare(left->symbol_name, right->symbol_name);
-	if (cmp != 0)
-		return cmp < 0;
+	if (left->line_number != right->line_number)
+		return left->line_number < right->line_number;
 
 	return left->address < right->address;
 }

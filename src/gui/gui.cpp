@@ -63,6 +63,15 @@ namespace ui {
     // Main Window - Report Tab - Source File
     //
     static void show_source_file();
+
+    // Helpers
+    //
+
+    static bool is_slash(char c);
+
+    static bool find_last_slash(strv path, size_t* index);
+
+    strv path_get_last_segment(strv path);
 }
 
 namespace ui {
@@ -329,6 +338,16 @@ namespace ui {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
 
+                static strv unknown_file_location = STRV("<unknown-file-location>");
+                static strv unknown_symbol = STRV("<unknown-symbol>");
+                static strv unknown_module = STRV("<unknown-module>");
+
+                bool has_file = item.source_file_name.size > 0;
+                strv filepath = item.source_file_name.size ? item.source_file_name : unknown_file_location;
+                strv filename = has_file ? path_get_last_segment(item.source_file_name) : filepath;
+                strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
+                strv mobule = item.module_name.size ? item.module_name : unknown_module;
+
                 // Make row selectable
                 {
                     static void* selected = 0;
@@ -343,24 +362,22 @@ namespace ui {
                         selected = (void*)item.symbol_name.data;
                     }
 
+                    // @FIXME: It does not feel right to display a hoverable tooltip.
+                    // Insteda display details in a tooltip bar below the grid.
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.line_number != 0)
+                    {
+                        ImGui::SetTooltip( STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.line_number);
+                    }
+
                     // Jump to file and go to specified line on double click.
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                     {
-                        gui->goto_line(item.source_file_name, item.line_number);
+                        gui->jump_to_file(item.source_file_name, item.line_number);
                     }
 
                     ImGui::SameLine();
                 }
                 
-                static strv unknown_file_location = STRV("<unknown-file-location>");
-                static strv unknown_symbol = STRV("<unknown-symbol>");
-                static strv unknown_module= STRV("<unknown-module>");
-
-                bool has_file = item.source_file_name.size > 0;
-                strv file =  item.source_file_name.size ? item.source_file_name : unknown_file_location;
-                strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
-                strv mobule = item.module_name.size ? item.module_name : unknown_module;
-
                 ImGui::Text("%.2f", (double)item.counter * inverse_items_count);
 
                 // Display counter
@@ -376,7 +393,13 @@ namespace ui {
 
                     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
                     {
-                        ImGui::SetTooltip(STRV_FMT, STRV_ARG(file));
+                        ImGui::SetTooltip("Open file: " STRV_FMT, STRV_ARG(filepath));
+                    }
+
+                    // Jump to file and go to specified line on simple click on the file icon.
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    {
+                        gui->jump_to_file(item.source_file_name, item.line_number);
                     }
                 }
 
@@ -395,7 +418,7 @@ namespace ui {
                 // Display file name.
                 {
                     ImGui::TableSetColumnIndex(5);
-                    ImGui::Text(STRV_FMT, STRV_ARG(file) );
+                    ImGui::Text(STRV_FMT, STRV_ARG(filepath) );
                 }
             }
             ImGui::EndTable();
@@ -469,6 +492,58 @@ namespace ui {
     {
         text_viewer.render();
     }
+
+    static bool is_slash(char c)
+    {
+        return	(c == '/' || c == '\\');
+    }
+
+    static bool find_last_slash(strv path, size_t* index)
+    {
+        const char* cursor;
+        const char* begin;
+
+        char c;
+
+        cursor = path.data + path.size - 1; // set the cursor to the last char
+        begin = path.data;
+
+        while (cursor > begin) {
+            c = *cursor;
+            if (c == '\\' || c == '/')
+            {
+                *index = (cursor - begin);
+                return true;
+            }
+            --cursor;
+        }
+
+        return false;
+    }
+
+    strv path_get_last_segment(strv path)
+    {
+        if (path.size <= 0)
+            return strv_make();
+
+        strv result = path;
+        if (is_slash(strv_back(result)))
+        {
+            result.size -= 1; /* Remove last slash, so that it does not get counted in the next find_last_pathname_separator */
+        }
+
+        size_t last_separator_start_pos;
+        if (!find_last_slash(result, &last_separator_start_pos))
+        {
+            return result; /* No separator found, return the original path */
+        }
+
+        size_t new_size = last_separator_start_pos + 1; /* new_size = index + 1 */
+        result.data = result.data + new_size;
+        result.size = result.size - new_size;
+
+        return result;
+    }
 };
 
 gui::gui(struct sampler* s, struct report* r)
@@ -527,7 +602,7 @@ void gui::open_file(strv filepath)
     text_viewer.set_text(content_view);
 }
 
-void gui::goto_line(strv filepath, size_t line)
+void gui::jump_to_file(strv filepath, size_t line)
 {
     if (!strv_equals(current_opened_filepath, filepath))
     {

@@ -32,7 +32,9 @@ struct gui {
 	int main();
 
 	void open_file(strv filepath);
-	void goto_line(strv filepath, size_t line);
+	
+	// Open the specified file if it's not already opened and jump to the specified line.
+	void jump_to_file(strv filepath, size_t line);
 };
 
 #endif // SAMPLY_GUI_H
