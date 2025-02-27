@@ -61,7 +61,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
     if (handle == INVALID_HANDLE_VALUE
         || !GetFileInformationByHandleEx(handle, FileIdInfo, &info, sizeof(info)))
     {
-        log_error("GetFileInformationByHandleEx failed for file: %s", filepath);
+        log_error("GetFileInformationByHandleEx failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
@@ -72,7 +72,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
     LARGE_INTEGER file_size;
     if (!GetFileSizeEx(handle, &file_size))
     {
-        log_error("GetFileSizeEx failed for file: %s", filepath);
+        log_error("GetFileSizeEx failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
@@ -86,7 +86,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
     HANDLE mapping_handle = CreateFileMappingW(file->handle, NULL, PAGE_READONLY, 0, 0, NULL);
     if (!mapping_handle)
     {
-        log_error("CreateFileMapping failed for file: %s", filepath);
+        log_error("CreateFileMapping failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
@@ -105,7 +105,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
 
     if (fd < 0)
     {
-        log_error("open failed for file: %s", filepath);
+        log_error("open failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
@@ -114,7 +114,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
     struct stat st;
     if (fstat(fd, &st) != 0)
     {
-        log_error("fstat failed for file: %s", filepath);
+        log_error("fstat failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
@@ -133,7 +133,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath)
 
     if (memory_ptr == MAP_FAILED)
     {
-        log_error("mmap failed for file: %s", filepath);
+        log_error("mmap failed for file: " STRV_FMT, STRV_ARG(filepath));
         return false;
     }
 
