@@ -1,9 +1,13 @@
 #include "symbol_manager.h"
 
-#include <dbghelp.h> /* To retrive the symbols. */
+#if _WIN32
+/* Specificaly include windows without "LEAN_AND_MEAN" here */
+#include <windows.h>
+#include <dbghelp.h> /* To retrieve the symbols. */
+#endif
 
 #include "samply.h"
-#include "log.h"
+#include "utils/log.h"
 #include "string_store.h"
 
 void symbol_manager_init(symbol_manager* m, struct string_store* s)

@@ -142,12 +142,13 @@
     <ClCompile Include="src\report.c" />
     <ClCompile Include="src\gui\gui.cpp" />
     <ClCompile Include="src\gui\gui_backend.cpp" />
-    <ClCompile Include="src\log.c" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\process.c" />
     <ClCompile Include="src\sampler.c" />
     <ClCompile Include="src\string_store.c" />
     <ClCompile Include="src\symbol_manager.c" />
+    <ClCompile Include="src\utils\file_mapper.c" />
+    <ClCompile Include="src\utils\log.c" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="samply.ico" />
@@ -168,6 +169,7 @@
     <ClInclude Include="src\samply.h" />
     <ClInclude Include="src\string_store.h" />
     <ClInclude Include="src\symbol_manager.h" />
+    <ClInclude Include="src\utils\file_mapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -70,12 +70,6 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
-gui::gui(struct sampler* s, struct report* r)
-{
-    this->sampler = s;
-    this->report = r;
-}
-
 int gui::show()
 {
     // Create application window

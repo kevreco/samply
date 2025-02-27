@@ -2,7 +2,7 @@
 
 #include "samply.h"
 #include "sampler.h"
-#include "log.h"
+#include "utils/log.h"
 
 static char magic1_samp[4] = { 's', 'a', 'm', 'p' };
 static char magic2_summ[4] = { 's', 'u', 'm', 'm' };
@@ -240,7 +240,8 @@ void report_load_from_file(report* r, FILE* f)
 		/* 7) source file name data */
 		read_strv(f, &r->arena, &item.source_file_name);
 	
-		darrT_push_back(&r->summary_by_count, item);
+		read_uint64(f, &item.line_number);
+		darrT_push_back(summed_record , &r->summary_by_count, item);
 	}
 }
 
@@ -281,7 +282,7 @@ static void upsert_record(report* r, record* rec)
 	}
 	else
 	{
-		darrT_insert_many(&r->records, index, &line, 1);
+		darrT_insert_many(record, &r->records, index, &line, 1);
 	}
 }
 
@@ -292,9 +293,10 @@ static void update_summary_with(report* r, record* rec)
 	init.symbol_name = rec->symbol_name;
 	init.module_name = rec->module_name;
 	init.source_file_name = rec->source_file;
-	
+	init.line_number = rec->line_number;
+
 	summed_record* result = 0;
-	darrT_get_or_insert(&r->summary_by_count, init, result, summed_record_by_count_predicate_less);
+	darrT_get_or_insert(summed_record , &r->summary_by_count, init, result, summed_record_by_count_predicate_less);
 	result->counter += rec->counter;
 }
 

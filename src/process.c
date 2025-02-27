@@ -1,5 +1,5 @@
 #include "process.h"
-#include "log.h"
+#include "utils/log.h"
 
 bool args_are_valid(cmd_args args)
 {

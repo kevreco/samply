@@ -28,11 +28,23 @@
     <Filter Include="Header Files\3rdparty">
       <UniqueIdentifier>{715858e7-f21b-45ea-b65a-d054c25c61be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\text_viewer">
-      <UniqueIdentifier>{06df349c-7c84-4c96-8198-6351336d0edd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\3rdparty\text_viewer">
       <UniqueIdentifier>{2fdd459e-708f-4e20-b433-4f7d4a355892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdparty\imgui">
+      <UniqueIdentifier>{b88112aa-d497-4a40-b601-4e09436dde89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdparty\text_viewer">
+      <UniqueIdentifier>{06df349c-7c84-4c96-8198-6351336d0edd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{cc4f83c6-cdde-459a-a208-1e393ba25e77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils">
+      <UniqueIdentifier>{3cdcafc3-8a65-44bf-93e0-b00a8f0c8f30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{cad6f756-ae18-4914-b511-1bd1f944dfe5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,9 +78,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\log.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\process.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,6 +102,12 @@
     <ClCompile Include="src\3rdparty\text_viewer\text_viewer_demo.cpp">
       <Filter>Source Files\3rdparty\text_viewer</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\file_mapper.c">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\log.c">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="samply.ico">
@@ -101,12 +116,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\process.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\gui\gui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sampler.h">
@@ -133,17 +142,26 @@
     <ClInclude Include="src\samply.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\3rdparty\multi_mapT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\string_store.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\3rdparty\text_viewer\text_viewer.hpp">
-      <Filter>Header Files\text_viewer</Filter>
+      <Filter>Header Files\3rdparty\text_viewer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rdparty\multi_mapT.h">
+      <Filter>Header Files\3rdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h">
+      <Filter>Header Files\3rdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\gui.hpp">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\file_mapper.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\log.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

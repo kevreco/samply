@@ -48,7 +48,7 @@ typedef bool(*darr_predicate_t)(void* left, void* right);
     } while (0)
 
 /* Insert space at 'index' and increase the size of the array. */
-#define darrT_insert_many_space(arr, index, count) \
+#define darrT_insert_many_space(type, arr, index, count) \
 do { \
     size_t count_to_move = (arr)->size - (index); \
     DARR_ASSERT((arr) != NULL); \
@@ -56,7 +56,7 @@ do { \
     DARR_ASSERT((index) >= 0); \
     DARR_ASSERT((index) <= (arr)->size); \
     size_t sizeof_value = sizeof(*(arr)->data); \
-    darrT_ensure_space((arr), (arr)->size + (count)); \
+    darrT_ensure_space(type, (arr), (arr)->size + (count)); \
     if (count_to_move > 0) \
     { \
         memmove((arr)->data + ((index) + (count)), (arr)->data + (index), count_to_move * sizeof_value); \
@@ -65,21 +65,21 @@ do { \
 } while(0) 
 
 /* Insert space and then copy then values. */
-#define darrT_insert_many(arr, index, values_ptr, count) \
+#define darrT_insert_many(type, arr, index, values_ptr, count) \
 do { \
-    darrT_insert_many_space(arr, index, count); \
+    darrT_insert_many_space(type, arr, index, count); \
     for(int i = 0; i < (count); i += 1) { \
         (arr)->data[index + i] = (values_ptr)[i]; \
     } \
 }  while(0)
 
 /* Insert values at the end of the array. */
-#define darrT_push_back_many(arr, values_ptr, count) \
-    darrT_insert_many(arr, (arr)->size, values_ptr, count)
+#define darrT_push_back_many(type, arr, values_ptr, count) \
+    darrT_insert_many(type, arr, (arr)->size, values_ptr, count)
 
-#define darrT_push_back(arr, value)  \
+#define darrT_push_back(type, arr, value)  \
     do { \
-        darrT_insert_many_space((darr_void*)(void*)(arr), (arr)->size, 1); \
+        darrT_insert_many_space(type, (arr), (arr)->size, 1); \
         (arr)->data[(arr)->size-1] = (value); \
     } while (0)
 
@@ -90,11 +90,11 @@ do { \
 do { \
         type v = (value); \
         size_t index = darr_lower_bound_predicate((arr)->data, 0, (arr)->size, &v, sizeof(*(arr)->data), (less)); \
-        darrT_insert_many((arr), index, &v, 1); \
+        darrT_insert_many(type, (arr), index, &v, 1); \
 } while (0)
 
 /* Make enough space. */
-#define darrT_ensure_space(arr, count) \
+#define darrT_ensure_space(type, arr, count) \
 do { \
     if ((arr)->size + (count) > (arr)->capacity) \
     { \
@@ -108,7 +108,7 @@ do { \
         } \
         void* mem = realloc((arr)->data, (arr)->capacity * sizeof(*(arr)->data)); \
         if (!mem) { free((arr)->data); DARR_ASSERT(0 && "Could not allocated memory."); exit(1); } \
-        (arr)->data = mem; \
+        (arr)->data = (type*)mem; \
     } \
 } while (0)
 
@@ -135,6 +135,29 @@ inline size_t darr_lower_bound_predicate(void* void_ptr, size_t left, size_t rig
     return left;
 }
 
+inline size_t darr_upper_bound_predicate(void* void_ptr, size_t left, size_t right, void* value, size_t sizeof_value, darr_predicate_t less)
+{
+    char* ptr = (char*)void_ptr;
+    size_t count = right - left;
+    size_t step;
+    size_t mid; /* index of the found value */
+
+    while (count > 0) {
+        step = count >> 1; /* count divide by two using bit shift */
+
+        mid = left + step;
+
+        if (less(value, ptr + (mid * sizeof_value)) == 0) {
+            left = mid + 1;
+            count -= step + 1;
+        }
+        else {
+            count = step;
+        }
+    }
+    return left;
+}
+
 /* If value already exist, set it to value_ptr.
    Example:
 
@@ -144,12 +167,12 @@ inline size_t darr_lower_bound_predicate(void* void_ptr, size_t left, size_t rig
        // If to_insert did not exist yet it's inserted.
        // result always contains the new added item or the already existing item.
 */
-#define darrT_get_or_insert(arr, value, value_ptr, less) \
+#define darrT_get_or_insert(type, arr, value, value_ptr, less) \
 do { \
     size_t index = darr_lower_bound_predicate((arr)->data, 0, (arr)->size, &(value), sizeof(*(arr)->data), (less)); \
     if (index == (arr)->size || (less)(&(value), ((arr)->data + index))) \
     { \
-        darrT_insert_many((arr), index, &(value), 1); \
+        darrT_insert_many(type, (arr), index, &(value), 1); \
     } \
     (value_ptr) = (arr)->data + index; \
 } while(0)

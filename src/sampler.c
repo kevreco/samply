@@ -3,7 +3,7 @@
 #include "darrT.h"
 #include "strv.h"
 
-#include "log.h"
+#include "utils/log.h"
 
 static int sample_thread_procedure(sampler* s);
 static enum sample_result get_sample(sampler* s);

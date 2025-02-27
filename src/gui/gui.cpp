@@ -31,6 +31,7 @@ struct config {
 static config cfg;
 
 static tv::text_viewer text_viewer;
+
 // Forward function declarations
 
 namespace ui {
@@ -45,23 +46,23 @@ namespace ui {
 
     // Main Window
     //
-    static void show_main_window(report* report);
-    static void show_full_screen_window_body(report* report);
+    static void show_main_window(gui* gui);
+    static void show_full_screen_window_body(gui* gui);
 
     // Main Window - Report Tab
     //
-    static void show_report_tab(report* report);
+    static void show_report_tab(gui* gui);
 
     // Main Window - Report Tab - Grid
     //
-    static void show_report_grid(report* report);
+    static void show_report_grid(gui* gui);
 
     static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count);
     static int report_table_sort(const void* left, const void* right);
 
     // Main Window - Report Tab - Source File
     //
-    static void show_source_file(record* records, size_t count);
+    static void show_source_file();
 }
 
 namespace ui {
@@ -138,7 +139,7 @@ namespace ui {
 
     // Main Window
     //
-    static void show_main_window(report* report)
+    static void show_main_window(gui* gui)
     {
         // Main windows always stayed buried behind all other windows.
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -166,7 +167,7 @@ namespace ui {
         {
             ImGui::PopStyleVar(); // Restore WindowPadding.
 
-            show_full_screen_window_body(report);
+            show_full_screen_window_body(gui);
         }
         ImGui::End();
 
@@ -176,7 +177,7 @@ namespace ui {
         }
     }
 
-    static void show_full_screen_window_body(report* report)
+    static void show_full_screen_window_body(gui* gui)
     {
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
         if (ImGui::BeginTabBar("MainTabBar", tab_bar_flags))
@@ -188,7 +189,7 @@ namespace ui {
             {
                 ImGui::PopStyleVar(1); // Restore item spacing.
                 
-                show_report_tab(report);
+                show_report_tab(gui);
 
                 ImGui::EndTabItem();
             }
@@ -207,7 +208,7 @@ namespace ui {
     // Main Window - Report Tab
     //
 
-    static void show_report_tab(report* report)
+    static void show_report_tab(gui* gui)
     {
         const ImGuiStyle& style = ImGui::GetStyle();
         float splitter_width = 8.0f;
@@ -236,7 +237,7 @@ namespace ui {
             ImGui::SameLine();
             // Top Right
             {
-                show_report_grid(report);
+                show_report_grid(gui);
             }
             
             ImGui::EndChild();
@@ -251,16 +252,7 @@ namespace ui {
             float expand_x_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
             ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle);
 
-            // This is only for debugging purpose
-            {
-                if (report->records.size)
-                {
-                    size_t limit = 200;
-                    size_t max = report->records.size < 200 ? report->records.size : 200;
-            
-                    show_source_file(report->records.data, max);
-                }
-            }
+            show_source_file();
 
             ImGui::EndChild();
         }
@@ -278,8 +270,13 @@ namespace ui {
     // Main Window - Report Tab - Grid
     //
 
-    static void show_report_grid(report* report)
+    static void show_report_grid(gui* gui)
     {
+        report* report = gui->report;
+
+        if (!report)
+            return;
+
         size_t sample_count = report->sample_count;
         summed_record* items = report->summary_by_count.data;
         size_t items_count = report->summary_by_count.size;
@@ -343,6 +340,13 @@ namespace ui {
                     {
                         selected = (void*)item.symbol_name.data;
                     }
+
+                    // Jump to file and go to specified line on double click.
+                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    {
+                        gui->goto_line(item.source_file_name, item.line_number);
+                    }
+
                     ImGui::SameLine();
                 }
                 
@@ -423,39 +427,26 @@ namespace ui {
     // Main Window - Report Tab - Source file
     //
 
-    static void show_source_file(record* records, size_t count)
+    static void show_source_file()
     {
-        static std::string text = R"(#include <stdio.h>
-
-int factorial(int n) {
-    if (n <= 1) return 1;
-    return n * factorial(n - 1);
-}
-
-int main() {
-    int number;
-
-    scanf("%d", &number);
-
-    if (number < 0) {
-        printf("Factorial is not defined for negative numbers.\n");
-    } else {
-        printf("Factorial of %d is %d\n", number, factorial(number));
-    }
-
-    return 0;
-})";
-
-        text_viewer.set_text(tv::string_view(text.data(), text.size()));
         text_viewer.render();
-
-        for (size_t i = 0; i < count; i += 1)
-        {
-            record r = records[i];
-            ImGui::Text("line: %zu - %p " STRV_FMT " - " STRV_FMT " ", r.line_number, r.address, STRV_ARG(r.symbol_name), STRV_ARG(r.source_file));
-        }
     }
 };
+
+gui::gui(struct sampler* s, struct report* r)
+{
+    this->sampler = s;
+    this->report = r;
+
+    file_mapper_init(&file_mapper);
+    current_opened_filepath = STRV("");
+    readonly_file_init(&current_file);
+}
+
+gui::~gui()
+{
+    file_mapper_destroy(&file_mapper);
+}
 
 int gui::main()
 {
@@ -463,7 +454,7 @@ int gui::main()
 
     show_main_menu_bar();
 
-    show_main_window(this->report);
+    show_main_window(this);
 
     if (cfg.open_about_window)
     {
@@ -481,4 +472,31 @@ int gui::main()
     }
 
     return 0;
+}
+
+void gui::open_file(strv filepath)
+{
+    strv content_to_display = STRV("");
+
+    // @TODO close previous already opened file
+
+    if (file_mapper_open(&file_mapper, &current_file, filepath))
+    {
+        content_to_display = current_file.view;
+    }
+
+    tv::string_view content_view = tv::string_view(content_to_display.data, content_to_display.size);
+    text_viewer.set_text(content_view);
+}
+
+void gui::goto_line(strv filepath, size_t line)
+{
+    if (!strv_equals(current_opened_filepath, filepath))
+    {
+        open_file(filepath);
+    }
+
+    // @TODO use text_viewer to go to the specific line.
+
+    commands.line_to_go = line;
 }

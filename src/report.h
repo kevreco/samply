@@ -21,6 +21,7 @@ struct summed_record {
 	strv symbol_name;
 	strv module_name;
 	strv source_file_name;
+	size_t line_number;
 	size_t counter;
 };
 
