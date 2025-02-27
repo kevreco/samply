@@ -12,16 +12,18 @@ static ht_hash_t hash_pointer(record* item);
 static bool items_are_same(record* left, record* right);
 static void items_swap(record* left, record* right);
 
-void sampler_init(sampler* s, struct string_store* store)
+void sampler_init(sampler* s)
 {
 	memset(s, 0, sizeof(sampler));
-	symbol_manager_init(&s->mgr, store);
+
+	ht_init(&s->results, sizeof(record), hash_pointer, (ht_predicate_t)items_are_same, items_swap, 1024);
+
+	string_store_init(&s->string_store);
+	symbol_manager_init(&s->mgr, &s->string_store);
 
 	s->thread = thread_create(sample_thread_procedure, s, THREAD_STACK_SIZE_DEFAULT);
 
 	thread_timer_init(&s->sleeper);
-
-	ht_init(&s->results, sizeof(record), hash_pointer, (ht_predicate_t)items_are_same, items_swap, 1024);
 }
 
 int sampler_destroy(sampler* s)
@@ -35,6 +37,8 @@ int sampler_destroy(sampler* s)
 	thread_timer_term(&s->sleeper);
 
 	ht_destroy(&s->results);
+
+	string_store_destroy(&s->string_store);
 
 	return thread_return_value;
 }

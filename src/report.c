@@ -57,17 +57,18 @@ static void read_uint64(FILE* f, uint64_t* v);
 static void write_strv(FILE* f, strv str);
 static void read_strv(FILE* f, re_arena* a, strv* str);
 
-void report_init(report* r, string_store* s)
+void report_init(report* r)
 {
 	memset(r, 0, sizeof(report));
 
-	r->string_store = s;
 
 	darrT_init(&r->summary_by_count);
 	multi_mapT_init(&r->records);
 
 	size_t min_chunk_capacity = 4 * 1024;
 	re_arena_init(&r->arena, min_chunk_capacity);
+
+	string_store_init(&r->string_store);
 }
 
 void report_destroy(report* r)
@@ -77,6 +78,8 @@ void report_destroy(report* r)
 	multi_mapT_init(&r->records);
 
 	re_arena_destroy(&r->arena);
+
+	string_store_destroy(&r->string_store);
 }
 
 void report_clear(report* r)

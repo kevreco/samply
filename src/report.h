@@ -30,7 +30,7 @@ typedef darrT(summed_record) summed_records;
 
 typedef struct report report;
 struct report {
-	string_store* string_store;
+	string_store string_store;
 
 	size_t sample_count;
 
@@ -47,7 +47,7 @@ struct report {
 	re_arena arena;
 };
 
-void report_init(report* r, string_store* s);
+void report_init(report* r);
 void report_destroy(report* r);
 
 /* Reset allocated buffers without deallocating them. */

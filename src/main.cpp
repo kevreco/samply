@@ -14,12 +14,10 @@ bool run_process(process* p, sampler* s, report* report);
 
 int main(int argc, char** argv)
 {
-    string_store store;
-    string_store_init(&store);
     sampler s;
-    sampler_init(&s, &store);
+    sampler_init(&s);
     report report;
-    report_init(&report, &store);
+    report_init(&report);
 
     int exit_code = 0;
     bool no_subprocess_error = true;
@@ -65,7 +63,6 @@ int main(int argc, char** argv)
 
     sampler_destroy(&s);
     report_destroy(&report);
-    string_store_destroy(&store);
 
     if ( !no_subprocess_error )
     {

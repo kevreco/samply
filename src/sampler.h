@@ -3,10 +3,12 @@
 
 #include "stdbool.h"
 
+#include "thread.h"
 #include "darrT.h"
 #include "insert_only_ht.h"
+
 #include "symbol_manager.h"
-#include "thread.h"
+#include "string_store.h"
 
 #if __cplusplus
 extern "C" {
@@ -40,6 +42,8 @@ struct record {
 typedef struct sampler sampler;
 struct sampler {
 
+	string_store string_store;
+
 	/* Thread kept alive to perform the sampling. */
 	thread_ptr_t thread;
 
@@ -63,7 +67,7 @@ struct sampler {
 	symbol_manager mgr;
 };
 
-void sampler_init(sampler* s, struct string_store* store);
+void sampler_init(sampler* s);
 
 /* Stop sampling and wait for the thread to be finished. */
 int sampler_destroy(sampler* s);
