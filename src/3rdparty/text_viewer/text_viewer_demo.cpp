@@ -27,7 +27,7 @@ namespace tv {
         {
             first_time = false;
 
-            text = std::string(
+            static std::string text = std::string(
 R"(#include <stdio.h>
 
 int factorial(int n) {
@@ -49,7 +49,7 @@ int main() {
     return 0;
 })");
 
-            viewer.set_text(text);
+            viewer.set_text(tv::string_view(text.data(), text.size()));
         }
 
         {

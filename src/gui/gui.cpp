@@ -425,7 +425,7 @@ namespace ui {
 
     static void show_source_file(record* records, size_t count)
     {
-        std::string txt = R"(#include <stdio.h>
+        static std::string text = R"(#include <stdio.h>
 
 int factorial(int n) {
     if (n <= 1) return 1;
@@ -446,7 +446,7 @@ int main() {
     return 0;
 })";
 
-        text_viewer.set_text(txt);
+        text_viewer.set_text(tv::string_view(text.data(), text.size()));
         text_viewer.render();
 
         for (size_t i = 0; i < count; i += 1)

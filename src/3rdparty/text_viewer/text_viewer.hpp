@@ -143,8 +143,8 @@ struct text_viewer
 	~text_viewer() {}
 
 	void render();
-	void set_text(const std::string& text);
-	std::string get_text() const;
+	void set_text(string_view text);
+	string_view get_text() const;
 	std::string get_text(coord start, coord end) const;
 	std::string get_selected_text() const;
 	std::string get_selected_line_text() const;
@@ -211,7 +211,7 @@ private:
 	void handle_keyboard_inputs();
 	void handle_mouse_inputs();
 
-	std::string current_text;
+	string_view current_text;
 
 	std::vector<line> lines;
 

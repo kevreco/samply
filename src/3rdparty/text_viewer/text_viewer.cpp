@@ -143,14 +143,14 @@ void text_viewer::render()
 	}
 }
 
-void text_viewer::set_text(const std::string& text)
+void text_viewer::set_text(string_view text)
 {
 	current_text = text;
 
 	text_changed = true;
 }
 
-std::string text_viewer::get_text() const
+string_view text_viewer::get_text() const
 {
 	return current_text;
 }
@@ -292,14 +292,14 @@ void text_viewer::copy_selection()
 
 bool text_viewer::need_to_split_text() const
 {
-	return current_text.size() || text_changed;
+	return current_text.size || text_changed;
 }
 
 void text_viewer::split_text()
 {
 	lines.clear();
 
-	line_splitter splitter{ string_view(current_text.data(), current_text.size()) };
+	line_splitter splitter{ current_text };
 
 	string_view lineText;
 	const char* line_ending;
