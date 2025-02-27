@@ -162,6 +162,8 @@ struct text_viewer
 
 	void copy_selection();
 
+	void scroll_to_line(size_t line_index);
+
 private:
 
 	struct line {
@@ -234,6 +236,9 @@ private:
 	coord mouse_start_pos;
 
 	float last_click_time;
+	
+	static const size_t no_line_to_scroll = 0xffffffff;
+	size_t line_to_scroll_to = no_line_to_scroll;
 
 public:
 

@@ -289,6 +289,10 @@ void text_viewer::copy_selection()
 	}
 }
 
+void text_viewer::scroll_to_line(size_t line)
+{
+	this->line_to_scroll_to = line;
+}
 
 bool text_viewer::need_to_split_text() const
 {
@@ -334,6 +338,15 @@ void text_viewer::render_core()
 	ImGuiListClipper clipper;
 
 	clipper.Begin(lines.size());
+
+	bool need_to_scroll = line_to_scroll_to != no_line_to_scroll;
+	size_t scroll_at = line_to_scroll_to;
+	if (need_to_scroll)
+	{
+		line_to_scroll_to = no_line_to_scroll;
+		// Force display of specified line.
+		clipper.ForceDisplayRangeByIndices(scroll_at, scroll_at + 1);
+	}
 
 	while (clipper.Step())
 	{
@@ -387,6 +400,12 @@ void text_viewer::render_core()
 				}
 
 				ImGui::Text(TV_SV_FMT, TV_SV_ARG(line.text));
+
+				if (need_to_scroll && scroll_at == line_number)
+				{
+					// Scroll right at the previous item.
+					ImGui::SetScrollHereY(0.5f);
+				}
 
 				if (options.display_text_selection)
 				{

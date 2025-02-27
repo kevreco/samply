@@ -609,7 +609,10 @@ void gui::jump_to_file(strv filepath, size_t line)
         open_file(filepath);
     }
 
-    // @TODO use text_viewer to go to the specific line.
+    // Scroll to specific line
+    text_viewer.scroll_to_line(line);
 
-    commands.line_to_go = line;
+    // Highlight specific line.
+    tv::coord pos = text_viewer.get_cursor_position();
+    text_viewer.set_cursor_position(tv::coord(line, pos.column));
 }

@@ -13,14 +13,12 @@ struct gui {
 
 	// Context to open and close (mmapped) readonly files
 	file_mapper file_mapper;
+
 	// Reference to the current opened filepath
 	strv current_opened_filepath;
+
 	// Current opened file
 	readonly_file current_file;
-
-	struct {
-		size_t line_to_go;
-	} commands;
 
 	gui(struct sampler* s, struct report* r);
 	~gui();
