@@ -170,3 +170,13 @@ void readonly_file_init(readonly_file* file)
 {
     memset(file, 0, sizeof(readonly_file));
 }
+
+bool readonly_file_is_opened(readonly_file* file)
+{
+#if _WIN32
+    return file->handle != 0
+        && file->handle != INVALID_HANDLE_VALUE;
+#else
+#error "not implemented yet"
+#endif
+}

@@ -50,6 +50,7 @@ bool file_mapper_open(file_mapper* fm, readonly_file* file, strv filepath);
 bool file_mapper_close(file_mapper* fm, readonly_file* file);
 
 void readonly_file_init(readonly_file* file);
+bool readonly_file_is_opened(readonly_file* file);
 
 #if __cplusplus
 }

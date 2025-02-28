@@ -647,8 +647,13 @@ void gui::open_file(strv filepath)
 {
     strv content_to_display = STRV("");
 
-    // @TODO close previous already opened file
+    // Close previous file
+    if (readonly_file_is_opened(&current_file))
+    {
+        file_mapper_close(&file_mapper, &current_file);
+    }
 
+    // Open new file
     if (file_mapper_open(&file_mapper, &current_file, filepath))
     {
         content_to_display = current_file.view;
