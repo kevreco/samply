@@ -162,7 +162,13 @@ struct text_viewer
 
 	void copy_selection();
 
-	void scroll_to_line(size_t line_index);
+	size_t line_number_to_line_index(size_t line_number);
+	size_t line_index_to_line_number(size_t line_index);
+
+	// Next time the viewer is rendered, scroll to line number displayed in the viewer.
+	void scroll_to_line_number(size_t line_number);
+	// Next time the viewer is rendered, scroll to the 0-based index.
+	void scroll_to_line_index(size_t line_index);
 
 private:
 
@@ -237,8 +243,8 @@ private:
 
 	float last_click_time;
 	
-	static const size_t no_line_to_scroll = 0xffffffff;
-	size_t line_to_scroll_to = no_line_to_scroll;
+	bool need_to_scroll = false;
+	size_t line_to_scroll_to = 0;
 
 public:
 

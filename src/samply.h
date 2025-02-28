@@ -16,7 +16,17 @@
 #define SMP_ASSERT   assert
 #endif
 
+#ifdef _MSC_VER
+#define SMP_CDECL __cdecl
+#else
+#define SMP_CDECL
+#endif
+
 #include "strv.h"
+
+#if __cplusplus
+extern "C" {
+#endif
 
 static inline size_t samply_djb2_hash(strv str)
 {
@@ -37,5 +47,9 @@ static inline size_t samply_djb2_hash(strv str)
 #undef SMP_HASH_INIT
 #undef SMP_HASH
 }
+
+#if __cplusplus
+}
+#endif
 
 #endif /* SAMPLY_H */

@@ -94,6 +94,27 @@ void report_clear(report* r)
 	re_arena_clear(&r->arena);
 }
 
+record_range record_range_make()
+{
+	record_range r;
+	memset(&r, 0, sizeof(record_range));
+	return r;
+}
+
+record_range record_range_for_file(report* r, strv filepath)
+{
+	record_range range;
+	record rec = { 0 };
+	rec.source_file = filepath;
+	size_t lower = multip_mapT_lower_bound(&r->records, rec, (darr_predicate_t)record_by_file_predicate_less);
+	size_t upper = multip_mapT_upper_bound(&r->records, rec, (darr_predicate_t)record_by_file_predicate_less);
+
+	range.begin = r->records.data + lower;
+	range.end = r->records.data + upper;
+
+	return range;
+}
+
 /*-----------------------------------------------------------------------*/
 /* OUTPUT - Convert report to something else. */
 /*-----------------------------------------------------------------------*/
@@ -308,8 +329,7 @@ static void update_summary_with(report* r, record* rec)
 	result->counter += rec->counter;
 }
 
-//typedef int(__cdecl* _CoreCrtNonSecureSearchSortCompareFunction)(void const*, void const*);
-static int __cdecl compare_summed_record(summed_record* left, summed_record* right)
+static int SMP_CDECL compare_summed_record(const summed_record* left, const summed_record* right)
 {
 	if (left->counter < right->counter)
 		return 1;

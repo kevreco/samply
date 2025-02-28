@@ -610,9 +610,10 @@ void gui::jump_to_file(strv filepath, size_t line)
     }
 
     // Scroll to specific line
-    text_viewer.scroll_to_line(line);
+    text_viewer.scroll_to_line_number(line);
 
     // Highlight specific line.
     tv::coord pos = text_viewer.get_cursor_position();
-    text_viewer.set_cursor_position(tv::coord(line, pos.column));
+    pos.line = text_viewer.line_number_to_line_index(line);
+    text_viewer.set_cursor_position(pos);
 }

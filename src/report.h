@@ -54,6 +54,14 @@ void report_destroy(report* r);
 /* Reset allocated buffers without deallocating them. */
 void report_clear(report* r);
 
+typedef struct record_range record_range;
+struct record_range {
+	record* begin;
+	record* end;
+};
+
+record_range report_get_records_range_for_file(report* r, strv file);
+
 /*-----------------------------------------------------------------------*/
 /* OUTPUT - Convert report to something else. */
 /*-----------------------------------------------------------------------*/
@@ -68,7 +76,7 @@ bool report_save_to_filepath(report* r, const char* filepath);
 void report_save_to_file(report* r, FILE* f);
 
 /*-----------------------------------------------------------------------*/
-// INPUT - Load report from something else.
+/* INPUT - Load report from something else. */
 /*-----------------------------------------------------------------------*/
 
 /* Clear report and load from sampler. */

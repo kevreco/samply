@@ -289,9 +289,27 @@ void text_viewer::copy_selection()
 	}
 }
 
-void text_viewer::scroll_to_line(size_t line)
+size_t text_viewer::line_number_to_line_index(size_t line_number)
 {
-	this->line_to_scroll_to = line;
+	return line_number > 0 ? line_number - 1 : 0;
+}
+
+size_t text_viewer::line_index_to_line_number(size_t line_index)
+{
+	static const size_t max_line_number = ~0;
+	return line_index < max_line_number ? line_index + 1 : max_line_number;
+}
+
+void text_viewer::scroll_to_line_number(size_t line_number)
+{
+	need_to_scroll = true;
+	line_to_scroll_to = line_number_to_line_index(line_number);
+}
+
+void text_viewer::scroll_to_line_index(size_t line_index)
+{
+	need_to_scroll = true;
+	line_to_scroll_to = line_index;
 }
 
 bool text_viewer::need_to_split_text() const
@@ -328,10 +346,6 @@ void text_viewer::render_core()
 
 	ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
 
-	auto scroll_y = ImGui::GetScrollY();
-
-	auto line_number = (int)floor(scroll_y / graphical_char_size.y);
-
 	ImVec2 line_selection_rect_min;
 	ImVec2 line_selection_rect_max;
 
@@ -339,22 +353,27 @@ void text_viewer::render_core()
 
 	clipper.Begin(lines.size());
 
-	bool need_to_scroll = line_to_scroll_to != no_line_to_scroll;
+	bool need_to_scroll_this_frame = need_to_scroll;
 	size_t scroll_at = line_to_scroll_to;
 	if (need_to_scroll)
 	{
-		line_to_scroll_to = no_line_to_scroll;
+		need_to_scroll = false;
+		line_to_scroll_to = 0;
+
 		// Force display of specified line.
 		clipper.ForceDisplayRangeByIndices(scroll_at, scroll_at + 1);
 	}
 
 	while (clipper.Step())
 	{
-		for (int line_number = clipper.DisplayStart; line_number < clipper.DisplayEnd; line_number += 1)
+		// line_index: 0-based index
+		for (int line_index = clipper.DisplayStart; line_index < clipper.DisplayEnd; line_index += 1)
 		{
-			auto& line = lines[line_number];
+			auto& line = lines[line_index];
+			// Display line_number = number displayed to the user.
+			auto line_number = line_index_to_line_number(line_index);
 
-			bool line_is_selected = line_number == state.cursor_position.line;
+			bool line_is_selected = line_index == state.cursor_position.line;
 
 			if (options.display_line_selection && line_is_selected)
 			{
@@ -372,15 +391,15 @@ void text_viewer::render_core()
 
 			{
 				cursor_screen_pos.x = ImGui::GetCursorScreenPos().x;
-				ImVec2 line_start_screen_pos = ImVec2(cursor_screen_pos.x, cursor_screen_pos.y + line_number * graphical_char_size.y);
+				ImVec2 line_start_screen_pos = ImVec2(cursor_screen_pos.x, cursor_screen_pos.y + line_index * graphical_char_size.y);
 
 				float selection_start = -1.0f;
 				float selection_end = -1.0f;
 
 				if (options.display_text_selection)
 				{
-					coord lineStartCoord(line_number, 0);
-					coord lineEndCoord(line_number, get_line_column_length(line_number));
+					coord lineStartCoord(line_index, 0);
+					coord lineEndCoord(line_index, get_line_column_length(line_index));
 
 					assert(state.selection.start <= state.selection.end);
 					if (state.selection.start <= lineEndCoord)
@@ -393,7 +412,7 @@ void text_viewer::render_core()
 						selection_end = text_distance_from_line_start(state.selection.end < lineEndCoord ? state.selection.end : lineEndCoord);
 					}
 
-					if (state.selection.end.line > line_number)
+					if (state.selection.end.line > line_index)
 					{
 						selection_end += graphical_char_size.x;
 					}
@@ -401,7 +420,7 @@ void text_viewer::render_core()
 
 				ImGui::Text(TV_SV_FMT, TV_SV_ARG(line.text));
 
-				if (need_to_scroll && scroll_at == line_number)
+				if (need_to_scroll_this_frame && scroll_at == line_index)
 				{
 					// Scroll right at the previous item.
 					ImGui::SetScrollHereY(0.5f);
