@@ -4,6 +4,7 @@
 /* Specificaly include windows without "LEAN_AND_MEAN" here */
 #include <windows.h>
 #include <dbghelp.h> /* To retrieve the symbols. */
+#include <psapi.h> /* GetModuleBaseNameA  */
 #endif
 
 #include "samply.h"
@@ -15,7 +16,6 @@ void symbol_manager_init(symbol_manager* m, struct string_store* s)
 	memset(m, 0, sizeof(symbol_manager));
 
 	m->string_store = s;
-	darrT_init(&m->modules);
 
 #if _WIN32
 	// From the MSDN documentation:
@@ -29,23 +29,8 @@ void symbol_manager_init(symbol_manager* m, struct string_store* s)
 
 void symbol_manager_destroy(symbol_manager* m)
 {
-	darrT_destroy(&m->modules);
 	free(m->symbol_buffer);
 }
-
-#if _WIN32
-
-BOOL CALLBACK EnumModules(
-	PCSTR   ModuleName,
-	DWORD64 BaseOfDll,
-	PVOID   UserContext)
-{
-	symbol_manager* m = (symbol_manager*)UserContext;
-
-	return TRUE;
-}
-
-#endif
 
 void symbol_manager_load(symbol_manager* m, handle process_handle)
 {
@@ -58,12 +43,6 @@ void symbol_manager_load(symbol_manager* m, handle process_handle)
 		/* @TODO Get string from GetLastError and display it. */
 		log_error("Could not initialize symbols");
 		return;
-	}
-
-	if (!SymEnumerateModules64(process_handle, EnumModules, m))
-	{
-		/* @TODO Get string from GetLastError and display it. */
-		log_error("Could not enumerate modules symbols");
 	}
 
 	m->process_handle = process_handle;
@@ -92,6 +71,31 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 #else
 #error "symbol_manager_get_symbol_name not implemented yet"
 #endif
+}
+
+strv symbol_manager_get_module_name(symbol_manager* m, address addr)
+{
+	HMODULE hModule = NULL;
+	GetModuleHandleEx(
+		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+		| GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, /* DWORD dwFlags*/
+		(void*)addr, /* LPCWSTR lpModuleName */
+		&hModule   /* HMODULE* phModule */
+	);
+
+	DWORD name_len = GetModuleBaseNameA(GetCurrentProcess(), hModule, m->symbol_buffer, MAX_PATH);
+
+	if (name_len == 0)
+	{
+		return (strv)STRV("");
+	}
+
+	strv module_name;
+	module_name.data = m->symbol_buffer;
+	module_name.size = (size_t)name_len;
+
+	strv* s = string_store_get_or_create(m->string_store, module_name);
+	return *s;
 }
 
 void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number)

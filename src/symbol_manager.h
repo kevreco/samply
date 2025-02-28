@@ -11,25 +11,10 @@
 extern "C" {
 #endif
 
-#if _WIN32
-
-typedef struct module module;
-struct module {
-	address base_of_dll;
-	strv name;
-};
-	
-#else
-	#warning "UNIX-like not implemented yet."
-#endif
-
-typedef darrT(module) modules;
-
 typedef struct symbol_manager symbol_manager;
 struct symbol_manager {
 	struct string_store* string_store;
 	handle process_handle;
-	modules modules;
 #if _WIN32
 	char* symbol_buffer;
 #endif
@@ -44,6 +29,9 @@ void symbol_manager_load(symbol_manager* m, handle process_handle);
 
 /* Get symbol name from the process loaded by symbol_manager_load. */
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr);
+
+/* Get .dll name. */
+strv symbol_manager_get_module_name(symbol_manager* m, address addr);
 
 /* Get location (source file and line number) from address. */
 void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number);

@@ -148,12 +148,13 @@ static enum sample_result get_sample(sampler* s)
 	inserted->counter += 1;
 
 	/* @TODO retrieve symbol name after sampling. */
-	/* @TODO retrieve module name. */
 	if (inserted->symbol_name.size == 0) 
 	{
 		inserted->symbol_name = symbol_manager_get_symbol_name(&s->mgr, addr);
 
 		symbol_manager_get_location(&s->mgr, addr, &inserted->source_file, &inserted->line_number);
+
+		inserted->module_name = symbol_manager_get_module_name(&s->mgr, addr);
 	}
 
 #endif
