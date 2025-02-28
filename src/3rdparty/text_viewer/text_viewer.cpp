@@ -423,7 +423,7 @@ void text_viewer::render_core()
 				if (need_to_scroll_this_frame && scroll_at == line_index)
 				{
 					// Scroll right at the previous item.
-					ImGui::SetScrollHereY(0.5f);
+					ImGui::SetScrollHereY(0.1f);
 				}
 
 				if (options.display_text_selection)
