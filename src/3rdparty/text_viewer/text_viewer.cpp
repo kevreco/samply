@@ -754,6 +754,8 @@ void text_viewer::handle_keyboard_inputs()
 			copy_selection();
 		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_C))
 			copy_selection();
+		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_X))
+			copy_selection();
 		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_A))
 			select_all();
 	}
