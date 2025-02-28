@@ -10,6 +10,7 @@ namespace tv {
 
     static bool print_selection_coord = true;
     static bool print_cursor_coord = true;
+    static bool print_selected_line_number = true;
     static bool print_selected_text = true;
 
     static std::string text;
@@ -58,56 +59,70 @@ int main() {
                 // Options
                 ImGui::Text("Options:");
                 ImGui::Checkbox("Allow Keyboard Inputs", &viewer.options.allow_keyboard_inputs);
+                ImGui::SameLine();
                 ImGui::Checkbox("Allow Mouse Inputs", &viewer.options.allow_mouse_inputs);
-              
+                
+
                 ImGui::Checkbox("Display Text Selection", &viewer.options.display_text_selection);
+                ImGui::SameLine();
                 ImGui::Checkbox("Display Line Selection", &viewer.options.display_line_selection);
+               
                 ImGui::Checkbox("Display Line Prelude ", &viewer.options.display_line_prelude);
+                ImGui::SameLine();
                 ImGui::Checkbox("Display Line Number ", &viewer.options.display_line_number);
                 // Extra
                 ImGui::Text("API use:");
                 ImGui::Checkbox("Display Selection Coordinates", &print_selection_coord);
                 ImGui::Checkbox("Display Cursor Coordinate", &print_cursor_coord);
-                ImGui::Checkbox("Display Selected Text", &print_selected_text);
+                ImGui::Checkbox("Display Selected Line Number Coordinate", &print_selected_line_number);
+                ImGui::Checkbox("Get Selected Text", &print_selected_text);
             }
-             
-            {
-                // We want the left side to take as much space as possible.
-                float expand_x = -FLT_MIN;
-                // We want to keep a margin to display the information line the selected line, position, selection etc.
-                float expand_y_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
-                if (print_selection_coord)
-                    expand_y_but_keep_a_margin_of -= ImGui::GetTextLineHeightWithSpacing();
-                if (print_cursor_coord)
-                    expand_y_but_keep_a_margin_of -= ImGui::GetTextLineHeightWithSpacing();
-                if (print_selected_text)
-                    expand_y_but_keep_a_margin_of -= ImGui::GetTextLineHeightWithSpacing();
 
-                ImGui::BeginChild("Text Viewer", ImVec2(expand_x, expand_y_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle);
+
+            {
+                ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+
+                ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle, window_flags);
 
                 viewer.render();
 
                 ImGui::EndChild();
             }
 
-            if (print_selection_coord)
-            {
-                auto range = viewer.get_selection_range();
-               
-                ImGui::Text("Selection Range (%d %d) - (%d %d)",
-                    range.start.line, range.start.column,
-                    range.end.line, range.end.column);
-            }
+            ImGui::SameLine();
 
-            if (print_cursor_coord)
             {
-                auto coord = viewer.get_cursor_position();
-                ImGui::Text("Cursor Position %d %d", coord.line, coord.column);
-            }
+                ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
 
-            if (print_selected_text)
-            {
-                ImGui::Text("%s", viewer.get_selected_text().c_str());
+                ImGui::BeginChild("ChildR", ImVec2(0, -FLT_MIN), ImGuiChildFlags_Borders, window_flags);
+                if (print_selection_coord)
+                {
+                    auto range = viewer.get_selection_range();
+
+                    ImGui::BulletText("Selection Range (%d %d) - (%d %d)",
+                        range.start.line, range.start.column,
+                        range.end.line, range.end.column);
+                }
+
+                if (print_cursor_coord)
+                {
+                    auto coord = viewer.get_cursor_position();
+                    ImGui::BulletText("Cursor Position %d %d", coord.line, coord.column);
+                }
+
+                if (print_selected_line_number)
+                {
+                    auto line_number = viewer.get_selected_line_number();
+                    ImGui::BulletText("Selected line number %zu", line_number);
+                }
+                
+                if (print_selected_text)
+                {
+                    ImGui::BulletText("Selected Text:");
+                    ImGui::Text("%s", viewer.get_selected_text().c_str());
+                }
+
+                ImGui::EndChild();
             }
         }
 
