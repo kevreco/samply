@@ -160,10 +160,11 @@ struct text_viewer
 	void select_all();
 	bool has_selection() const;
 
-	void copy_selection();
+	void copy_selection() const;
 
-	size_t line_number_to_line_index(size_t line_number);
-	size_t line_index_to_line_number(size_t line_index);
+	size_t get_selected_line_number() const;
+	size_t line_number_to_line_index(size_t line_number) const;
+	size_t line_index_to_line_number(size_t line_index) const;
 
 	// Next time the viewer is rendered, scroll to line number displayed in the viewer.
 	void scroll_to_line_number(size_t line_number);

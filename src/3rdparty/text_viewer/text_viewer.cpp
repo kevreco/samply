@@ -269,7 +269,7 @@ bool text_viewer::has_selection() const
 	return state.selection.start < state.selection.end;
 }
 
-void text_viewer::copy_selection()
+void text_viewer::copy_selection() const
 {
 	if (has_selection())
 	{
@@ -289,12 +289,17 @@ void text_viewer::copy_selection()
 	}
 }
 
-size_t text_viewer::line_number_to_line_index(size_t line_number)
+size_t text_viewer::get_selected_line_number() const
+{
+	return state.cursor_position.line + 1;
+}
+
+size_t text_viewer::line_number_to_line_index(size_t line_number) const
 {
 	return line_number > 0 ? line_number - 1 : 0;
 }
 
-size_t text_viewer::line_index_to_line_number(size_t line_index)
+size_t text_viewer::line_index_to_line_number(size_t line_index) const
 {
 	static const size_t max_line_number = ~0;
 	return line_index < max_line_number ? line_index + 1 : max_line_number;
