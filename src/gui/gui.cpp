@@ -303,13 +303,14 @@ namespace ui {
         struct col_info {
             const char* name;
             int flags;
+            float initial_width; // 0.0f means auto
         } columns[report_table_column_COUNT] = {
-            { "%",       ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide },
-            { "Counter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending },
-            { ICON_LC_FILE_CODE,   ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort },
-            { "Symbol",  0 },
-            { "Module",  0 },
-            { "File",    0 },
+            { "%",       ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 0.0f },
+            { "Counter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending, 0.0f},
+            { ICON_LC_FILE_CODE,   ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 0.0f },
+            { "Symbol",  ImGuiTableColumnFlags_WidthFixed, 180.0f },
+            { "Module",  0, 0.0f },
+            { "File",    0, 0.0f },
         };
 
         if (ImGui::BeginTable("report_table", report_table_column_COUNT, flags))
@@ -317,7 +318,14 @@ namespace ui {
             ImGui::TableSetupScrollFreeze(1, 1);
             for (int i = 0; i < report_table_column_COUNT; i += 1)
             {
-                ImGui::TableSetupColumn(columns[i].name, columns[i].flags);
+                if (columns[i].initial_width > 0.0f)
+                {
+                    ImGui::TableSetupColumn(columns[i].name, columns[i].flags, columns[i].initial_width);
+                }
+                else
+                {
+                    ImGui::TableSetupColumn(columns[i].name, columns[i].flags);
+                }
             }
             ImGui::TableHeadersRow();
 
