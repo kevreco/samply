@@ -21,6 +21,7 @@ struct summed_record {
 	strv symbol_name;
 	strv module_name;
 	strv source_file_name;
+	/* @FIXME this should be the smallest line number of the records. */
 	size_t line_number;
 	size_t counter;
 };
@@ -54,14 +55,6 @@ void report_destroy(report* r);
 /* Reset allocated buffers without deallocating them. */
 void report_clear(report* r);
 
-typedef struct record_range record_range;
-struct record_range {
-	record* begin;
-	record* end;
-};
-
-record_range report_get_records_range_for_file(report* r, strv file);
-
 /*-----------------------------------------------------------------------*/
 /* OUTPUT - Convert report to something else. */
 /*-----------------------------------------------------------------------*/
@@ -87,6 +80,20 @@ bool report_load_from_filepath(report* r, const char* filepath);
 
 /* Clear report and load from FILE. */
 void report_load_from_file(report* r, FILE* f);
+
+/*-----------------------------------------------------------------------*/
+/* Records range. */
+/*-----------------------------------------------------------------------*/
+
+typedef struct record_range record_range;
+struct record_range {
+	record* begin;
+	record* end;
+};
+
+record_range record_range_make();
+record_range record_range_for_file(record* records, size_t count, strv file);
+record_range record_range_for_line(record* records, size_t count, size_t line_number);
 
 #if __cplusplus
 }

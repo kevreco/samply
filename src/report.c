@@ -44,6 +44,8 @@ struct summary_binary_header_v1 {
 
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right);
 static bool record_by_file_predicate_less(record* left, record* right);
+static bool record_by_line_predicate_less(record* left, record* right);
+
 /* Sort by source file, then by line number, then by address. */
 static bool record_predicate_less(record* left, record* right);
 
@@ -92,27 +94,6 @@ void report_clear(report* r)
 	multi_mapT_clear(&r->records);
 
 	re_arena_clear(&r->arena);
-}
-
-record_range record_range_make()
-{
-	record_range r;
-	memset(&r, 0, sizeof(record_range));
-	return r;
-}
-
-record_range record_range_for_file(report* r, strv filepath)
-{
-	record_range range;
-	record rec = { 0 };
-	rec.source_file = filepath;
-	size_t lower = multip_mapT_lower_bound(&r->records, rec, (darr_predicate_t)record_by_file_predicate_less);
-	size_t upper = multip_mapT_upper_bound(&r->records, rec, (darr_predicate_t)record_by_file_predicate_less);
-
-	range.begin = r->records.data + lower;
-	range.end = r->records.data + upper;
-
-	return range;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -272,14 +253,54 @@ void report_load_from_file(report* r, FILE* f)
 	}
 }
 
+record_range record_range_make()
+{
+	record_range r;
+	memset(&r, 0, sizeof(record_range));
+	return r;
+}
+
+record_range record_range_for_file(record* records, size_t count, strv filepath)
+{
+	record_range range;
+	record rec = { 0 };
+	rec.source_file = filepath;
+	size_t lower = darr_lower_bound_predicate(records, 0, count, &rec, sizeof(rec), (darr_predicate_t)record_by_file_predicate_less);
+	size_t upper = darr_upper_bound_predicate(records, 0, count, &rec, sizeof(rec), (darr_predicate_t)record_by_file_predicate_less);
+
+	range.begin = records + lower;
+	range.end = records + upper;
+
+	return range;
+}
+
+record_range record_range_for_line(record* records, size_t count, size_t line_number)
+{
+	record_range range;
+	record rec = { 0 };
+	rec.line_number = line_number;
+	size_t lower = darr_lower_bound_predicate(records, 0, count, &rec, sizeof(rec), record_by_line_predicate_less);
+	size_t upper = darr_upper_bound_predicate(records, 0, count, &rec, sizeof(rec), record_by_line_predicate_less);
+
+	range.begin = records + lower;
+	range.end = records + upper;
+
+	return range;
+}
+
 static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right)
 {
-	return  left->symbol_hash < right->symbol_hash;
+	return left->symbol_hash < right->symbol_hash;
 }
 
 static bool record_by_file_predicate_less(record* left, record* right)
 {
 	return strv_lexicagraphical_compare(left->source_file, right->source_file) < 0;
+}
+
+static bool record_by_line_predicate_less(record* left, record* right)
+{
+	return left->line_number < right->line_number;
 }
 
 /* Sort by source file, then by line number, then by address. */

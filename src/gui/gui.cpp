@@ -331,7 +331,7 @@ namespace ui {
                 }
             }
 
-            double inverse_items_count = 1.0 / (double)sample_count;
+            double inverse_items_count = 1.0f / (double)sample_count * 100.0f;
             for (int row_index = 0; row_index < items_count; row_index += 1)
             {
                 summed_record item = items[row_index];
@@ -493,6 +493,48 @@ namespace ui {
         text_viewer.render();
     }
 
+    static void render_extra_line_information(tv::options* options, int line_number, bool line_is_selected)
+    {
+        // Render line number
+        tv::default_line_prelude_renderer(options, line_number, line_is_selected);
+
+        gui* g = (gui*)options->line_prelude_user_data;
+        record_range* range = &g->records_of_current_file;
+
+        size_t record_count = range->end - range->begin;
+        
+        // Get all records for the line specified.
+        record_range lines = record_range_for_line(range->begin, record_count, line_number);
+
+        size_t count = 0;
+        // Agreggate all sampling count for this line.
+        {
+            record* cursor = lines.begin;
+            while (cursor < lines.end)
+            {
+                count += cursor[0].counter;
+                cursor += 1;
+            }
+        }
+
+        // Display percentage of sampling count.
+        {
+            int color = count ? ImGuiCol_PlotHistogram : ImGuiCol_PlotLines;
+            float percent = ((float)count / (float)g->report->sample_count) * 100.0f;
+
+            ImGui::TextColored(ImGui::GetStyleColorVec4(color), "%.2f %%", percent);
+            // Display more accurage percentage and the actual sampling count.
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+            {
+                ImGui::SetTooltip("%.4f - %zu", percent, count);
+            }
+            ImGui::SameLine();
+        }
+    }
+
+    // Helpers
+    //
+
     static bool is_slash(char c)
     {
         return	(c == '/' || c == '\\');
@@ -529,7 +571,7 @@ namespace ui {
         strv result = path;
         if (is_slash(strv_back(result)))
         {
-            result.size -= 1; /* Remove last slash, so that it does not get counted in the next find_last_pathname_separator */
+            result.size -= 1; /* Remove last slash, so that it does not get counted in the next find_last_slash */
         }
 
         size_t last_separator_start_pos;
@@ -554,6 +596,11 @@ gui::gui(struct sampler* s, struct report* r)
     file_mapper_init(&file_mapper);
     current_opened_filepath = STRV("");
     readonly_file_init(&current_file);
+
+    text_viewer.options.line_prelude = ui::render_extra_line_information;
+    text_viewer.options.line_prelude_user_data = this;
+
+    records_of_current_file = record_range_make();
 }
 
 gui::~gui()
@@ -596,6 +643,10 @@ void gui::open_file(strv filepath)
     if (file_mapper_open(&file_mapper, &current_file, filepath))
     {
         content_to_display = current_file.view;
+        
+        record* records = report->records.data;
+        size_t record_count = report->records.size;
+        records_of_current_file = record_range_for_file(records, record_count, filepath);
     }
 
     tv::string_view content_view = tv::string_view(content_to_display.data, content_to_display.size);

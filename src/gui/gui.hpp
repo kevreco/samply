@@ -2,6 +2,7 @@
 #define SAMPLY_GUI_H
 
 #include "utils/file_mapper.h"
+#include "report.h" // record_range
 
 struct sampler;
 struct report;
@@ -19,6 +20,8 @@ struct gui {
 
 	// Current opened file
 	readonly_file current_file;
+
+	record_range records_of_current_file;
 
 	gui(struct sampler* s, struct report* r);
 	~gui();
