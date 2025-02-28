@@ -119,7 +119,9 @@ int main() {
                 if (print_selected_text)
                 {
                     ImGui::BulletText("Selected Text:");
+                    ImGui::Separator();
                     ImGui::Text("%s", viewer.get_selected_text().c_str());
+                    ImGui::Separator();
                 }
 
                 ImGui::EndChild();
