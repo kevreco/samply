@@ -21,7 +21,6 @@ struct summed_record {
 	strv symbol_name;
 	strv module_name;
 	strv source_file_name;
-	/* @FIXME this should be the smallest line number of the records. */
 	size_t closest_line_number;
 	size_t counter;
 };
