@@ -348,6 +348,7 @@ namespace ui {
                 strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
                 strv mobule = item.module_name.size ? item.module_name : unknown_module;
 
+                bool jump_to_line = false;
                 // Make row selectable
                 {
                     static void* selected = 0;
@@ -361,18 +362,18 @@ namespace ui {
                     {
                         selected = (void*)item.symbol_name.data;
                     }
-
+                 
                     // @FIXME: It does not feel right to display a hoverable tooltip.
                     // Insteda display details in a tooltip bar below the grid.
-                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.line_number != 0)
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.closest_line_number != 0)
                     {
-                        ImGui::SetTooltip( STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.line_number);
+                        ImGui::SetTooltip( STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.closest_line_number);
                     }
 
                     // Jump to file and go to specified line on double click.
                     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                     {
-                        gui->jump_to_file(item.source_file_name, item.line_number);
+                        jump_to_line = true;
                     }
 
                     ImGui::SameLine();
@@ -389,17 +390,20 @@ namespace ui {
                 // Display icon.
                 {
                     ImGui::TableSetColumnIndex(2);
-                    ImGui::Text(has_file ? ICON_LC_FILE_CODE : ICON_LC_X);
 
-                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+                    if (has_file)
                     {
-                        ImGui::SetTooltip("Open file: " STRV_FMT, STRV_ARG(filepath));
-                    }
-
-                    // Jump to file and go to specified line on simple click on the file icon.
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                    {
-                        gui->jump_to_file(item.source_file_name, item.line_number);
+                        char buf[32];
+                        snprintf(buf, 32, ICON_LC_FILE_CODE "##%p", item.symbol_name.data); // ### operator override ID ignoring the preceding label
+                        
+                        if (ImGui::IconButton(buf))
+                        {
+                            jump_to_line = true;
+                        }
+                        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
+                        {
+                            ImGui::SetTooltip("Open file: " STRV_FMT, STRV_ARG(filepath));
+                        }
                     }
                 }
 
@@ -419,6 +423,11 @@ namespace ui {
                 {
                     ImGui::TableSetColumnIndex(5);
                     ImGui::Text(STRV_FMT, STRV_ARG(filepath) );
+                }
+
+                if (jump_to_line)
+                {
+                    gui->jump_to_file(item.source_file_name, item.closest_line_number);
                 }
             }
             ImGui::EndTable();

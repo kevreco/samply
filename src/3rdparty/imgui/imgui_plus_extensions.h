@@ -112,6 +112,21 @@ namespace ImGui {
         return SplitterBehavior(bb, id, ImGuiAxis_Y, pos, min_pos, max_pos, 0.0f);
     }
 
+	static inline bool NoPaddingButton(const char* label)
+	{
+		ImGuiContext* g = GetCurrentContext();
+		ImVec2 backup_padding = g->Style.FramePadding;
+		g->Style.FramePadding = ImVec2(0.0f, 0.0f);
+		bool pressed = ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_AlignTextBaseLine);
+		g->Style.FramePadding = backup_padding;
+		return pressed;
+	}
+
+	static inline bool IconButton(const char* label)
+	{
+		return NoPaddingButton(label);
+	}
+
 	struct vec3 {
 		float x, y, z;
 		vec3(float x, float y, float z)

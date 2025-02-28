@@ -158,8 +158,8 @@ void report_save_to_file(report* r, FILE* f)
 		/* 6) source file name size */
 		/* 7) source file name data */
 		write_strv(f, item.source_file_name);
-		/* 8) line number */
-		write_uint64(f, item.line_number);
+		/* 8) closest line number */
+		write_uint64(f, item.closest_line_number);
 	}
 }
 
@@ -246,8 +246,8 @@ void report_load_from_file(report* r, FILE* f)
 		/* 6) source file name size */
 		/* 7) source file name data */
 		read_strv(f, &r->arena, &item.source_file_name);
-		/* 8) line number */
-		read_uint64(f, &item.line_number);
+		/* 8) closest line number */
+		read_uint64(f, &item.closest_line_number);
 		
 		darrT_push_back(summed_record , &r->summary_by_count, item);
 	}
@@ -343,10 +343,18 @@ static void update_summary_with(report* r, record* rec)
 	init.symbol_name = rec->symbol_name;
 	init.module_name = rec->module_name;
 	init.source_file_name = rec->source_file;
-	init.line_number = rec->line_number;
+	init.closest_line_number = rec->line_number;
 
 	summed_record* result = 0;
 	darrT_get_or_insert(summed_record , &r->summary_by_count, init, result, summed_record_by_count_predicate_less);
+
+	// Update closest line number
+	if (rec->line_number < result->closest_line_number)
+	{
+		result->closest_line_number = rec->line_number;
+	}
+
+	// Update counter
 	result->counter += rec->counter;
 }
 
