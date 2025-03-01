@@ -51,7 +51,7 @@ int main() {
     return 0;
 })");
 
-            viewer.set_text(tv::string_view(text.data(), text.size()));
+            viewer.set_text(tv::string_view(text.data(), (int)text.size()));
         }
 
         {

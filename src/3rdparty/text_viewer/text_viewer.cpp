@@ -31,7 +31,7 @@ struct line_splitter {
 			switch (*cursor)
 			{
 			case '\r':
-				*line = string_view(start, cursor - start);
+				*line = string_view(start, cursor);
 
 				if (cursor + 1 < end && cursor[1] == '\n')
 				{
@@ -45,7 +45,7 @@ struct line_splitter {
 				}
 			case '\n':
 			{
-				*line = string_view(start, cursor - start);
+				*line = string_view(start, cursor);
 				cursor += 1;
 				return line_ending_N;
 			}
@@ -57,7 +57,7 @@ struct line_splitter {
 
 		if (cursor - start > 0)
 		{
-			*line = string_view(start, cursor - start);
+			*line = string_view(start, cursor);
 			return line_ending_NONE;
 		}
 
@@ -70,7 +70,7 @@ template<typename T> static inline T max(T left, T right) { return left >= right
 template<typename T> static inline T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
 
 static void render_line_number(const char* label);
-static size_t utf8_char_count(const char* str, size_t n);
+static int utf8_char_count(const char* str, int n);
 static const char* utf8_goto_previous_codepoint(const char* const begin, const char* cursor);
 static const char* utf8_goto_next_codepoint(const char* const cursor, const char* const end);
 
@@ -96,7 +96,8 @@ void default_line_prelude_renderer(struct options* options, int line_number, boo
 		}
 	}
 }
-size_t text_viewer::line::get_utf8_char_count() const
+
+int text_viewer::line::get_utf8_char_count() const
 {
 	if (!cached_ut8_char_count && text.size)
 	{
@@ -185,7 +186,7 @@ std::string text_viewer::get_text(coord start, coord end) const
 		if (line_count >= 2)
 		{
 			// For all line in between the first and the last copy the full line.
-			for (size_t i = start.line + 1; i < end.line; i += 1)
+			for (int i = start.line + 1; i < end.line; i += 1)
 			{
 				result.insert(result.size(), lines[i].text.data, lines[i].text.size);
 
@@ -290,29 +291,28 @@ void text_viewer::copy_selection() const
 	}
 }
 
-size_t text_viewer::get_selected_line_number() const
+int text_viewer::get_selected_line_number() const
 {
 	return line_index_to_line_number(get_cursor_position().line);
 }
 
-size_t text_viewer::line_number_to_line_index(size_t line_number) const
+int text_viewer::line_number_to_line_index(int line_number) const
 {
 	return line_number > 0 ? line_number - 1 : 0;
 }
 
-size_t text_viewer::line_index_to_line_number(size_t line_index) const
+int text_viewer::line_index_to_line_number(int line_index) const
 {
-	static const size_t max_line_number = ~0;
-	return line_index < max_line_number ? line_index + 1 : max_line_number;
+	return line_index + 1;
 }
 
-void text_viewer::scroll_to_line_number(size_t line_number)
+void text_viewer::scroll_to_line_number(int line_number)
 {
 	need_to_scroll = true;
 	line_to_scroll_to = line_number_to_line_index(line_number);
 }
 
-void text_viewer::scroll_to_line_index(size_t line_index)
+void text_viewer::scroll_to_line_index(int line_index)
 {
 	need_to_scroll = true;
 	line_to_scroll_to = line_index;
@@ -385,7 +385,7 @@ void text_viewer::render_core()
 	clipper.Begin(lines.size());
 
 	bool need_to_scroll_this_frame = need_to_scroll;
-	size_t scroll_at = line_to_scroll_to;
+	int scroll_at = line_to_scroll_to;
 	if (need_to_scroll)
 	{
 		need_to_scroll = false;
@@ -670,7 +670,7 @@ string_view text_viewer::get_substring(int line_index, int column_index_first, i
 		i += 1;
 	}
 
-	return string_view(lower, cursor - lower);
+	return string_view(lower, cursor);
 }
 
 string_view text_viewer::get_text_of_line_after(coord pos) const
@@ -688,7 +688,7 @@ string_view text_viewer::get_text_of_line_after(coord pos) const
 		i += 1;
 	}
 
-	return string_view(cursor, end - cursor);
+	return string_view(cursor, end);
 }
 
 string_view text_viewer::get_text_of_line_before(coord pos) const
@@ -706,7 +706,7 @@ string_view text_viewer::get_text_of_line_before(coord pos) const
 		i += 1;
 	}
 
-	return string_view(text.data, cursor - text.data);
+	return string_view(text.data, cursor);
 }
 
 coord_range text_viewer::get_range_of_same_char_at(coord value) const
@@ -791,7 +791,7 @@ int text_viewer::get_character_index(coord pos) const
 
 	auto& line = lines[pos.line];
 
-	return std::min(line.get_utf8_char_count(), (size_t)pos.column);
+	return tv::min(line.get_utf8_char_count(), pos.column);
 }
 
 int text_viewer::get_line_character_count(int index) const
@@ -968,12 +968,12 @@ static void render_line_number(const char* label)
 	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, NULL, &label_size, style.ButtonTextAlign, &bb);
 }
 
-static size_t utf8_char_count(const char* str, size_t n)
+static int utf8_char_count(const char* str, int n)
 {
 	const char* t = str;
-	size_t length = 0;
+	int length = 0;
 
-	while ((size_t)(str - t) < n && '\0' != *str) {
+	while ((str - t) < n && '\0' != *str) {
 		if (0xf0 == (0xf8 & *str)) {
 			/* 4-byte utf8 code point (began with 0b11110xxx) */
 			str += 4;
@@ -996,7 +996,7 @@ static size_t utf8_char_count(const char* str, size_t n)
 		length++;
 	}
 
-	if ((size_t)(str - t) > n) {
+	if ((str - t) > n) {
 		length--;
 	}
 	return length;

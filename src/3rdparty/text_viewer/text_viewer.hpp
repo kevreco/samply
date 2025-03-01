@@ -17,7 +17,7 @@ namespace tv
 	struct string_view
 	{
 		const char* data;
-		size_t size;
+		int size;
 
 		string_view()
 		{
@@ -25,10 +25,16 @@ namespace tv
 			size = 0;
 		}
 
-		string_view(const char* d, size_t s)
+		string_view(const char* d, int s)
 		{
 			data = d;
 			size = s;
+		}
+
+		string_view(const char* start, const char* end)
+		{
+			data = start;
+			size = (int)(end - start);
 		}
 
 		const char* begin()  const { return data; }
@@ -170,14 +176,14 @@ struct text_viewer
 
 	void copy_selection() const;
 
-	size_t get_selected_line_number() const;
-	size_t line_number_to_line_index(size_t line_number) const;
-	size_t line_index_to_line_number(size_t line_index) const;
+	int get_selected_line_number() const;
+	int line_number_to_line_index(int line_number) const;
+	int line_index_to_line_number(int line_index) const;
 
 	// Next time the viewer is rendered, scroll to line number displayed in the viewer.
-	void scroll_to_line_number(size_t line_number);
+	void scroll_to_line_number(int line_number);
 	// Next time the viewer is rendered, scroll to the 0-based index.
-	void scroll_to_line_index(size_t line_index);
+	void scroll_to_line_index(int line_index);
 
 	// Get coordinate as if the cursor position is moving up or down by 'delta' number of line.
 	// 'delta' can be positive or negative.
@@ -187,7 +193,7 @@ private:
 
 	struct line {
 		string_view text;
-		mutable size_t cached_ut8_char_count = 0;
+		mutable int cached_ut8_char_count = 0;
 
 		const char* line_ending = 0;
 
@@ -197,7 +203,7 @@ private:
 			this->line_ending = line_ending;
 		}
 
-		size_t get_utf8_char_count() const;
+		int get_utf8_char_count() const;
 	};
 
 	bool need_to_split_text() const;
@@ -252,7 +258,7 @@ private:
 	float last_click_time;
 
 	bool need_to_scroll = false;
-	size_t line_to_scroll_to = 0;
+	int line_to_scroll_to = 0;
 
 public:
 
