@@ -208,13 +208,10 @@ std::string text_viewer::get_selected_text() const
 	return get_text(range.start, range.end);
 }
 
-std::string text_viewer::get_selected_line_text() const
+string_view text_viewer::get_selected_line_text() const
 {
 	coord pos = get_cursor_position();
-	return get_text(
-		sanitize_coord(coord(pos.line, 0)),
-		sanitize_coord(coord(pos.line, coord::column_int_max))
-	);
+	return lines[pos.line].text;
 }
 
 coord text_viewer::get_cursor_position() const

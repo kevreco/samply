@@ -152,8 +152,8 @@ struct text_viewer
 	string_view get_text() const;
 	std::string get_text(coord start, coord end) const;
 	std::string get_selected_text() const;
-	// @TODO Try to use return string_view instead.
-	std::string get_selected_line_text() const;
+
+	string_view get_selected_line_text() const;
 
 	coord get_cursor_position() const;
 	void set_cursor_position(coord pos);

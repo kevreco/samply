@@ -120,7 +120,7 @@ int main() {
                 {
                     ImGui::BulletText("Selected Text:");
                     ImGui::Separator();
-                    ImGui::Text("%s", viewer.get_selected_text().c_str());
+                    ImGui::Text(TV_SV_FMT, TV_SV_ARG(viewer.get_selected_line_text()));
                     ImGui::Separator();
                 }
 
