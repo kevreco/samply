@@ -86,6 +86,8 @@ namespace tv
 				return line > o.line;
 			return column >= o.column;
 		}
+
+		static const int column_int_max = INT_MAX;
 	};
 
 	struct coord_range
@@ -126,6 +128,9 @@ namespace tv
 
 		bool display_line_number = true;
 
+		// Display various information useful to debug the selection.
+		bool debug_mode = false;
+
 		// Render something before displaying the line text.
 		line_prelude_renderer line_prelude = default_line_prelude_renderer;
 		// User data to use in the line_prelude_renderer.
@@ -147,16 +152,20 @@ struct text_viewer
 	string_view get_text() const;
 	std::string get_text(coord start, coord end) const;
 	std::string get_selected_text() const;
+	// @TODO Try to use return string_view instead.
 	std::string get_selected_line_text() const;
 
 	coord get_cursor_position() const;
 	void set_cursor_position(coord pos);
 
+	// The selection is stored non-normalized, the begining before the end,
+	// However. the 'get_selection_range' always returns a normalize range.
 	coord_range get_selection_range() const;
 
 	void set_selection_start(coord pos);
 	void set_selection_end(coord pos);
 	void set_selection(coord start, coord end);
+	void set_selection(coord_range range);
 	void select_all();
 	bool has_selection() const;
 
@@ -198,15 +207,16 @@ private:
 	// Get column index from distance
 	int text_distance_to_column_index(string_view view, float distance) const;
 
-	coord get_actual_cursor_coord() const;
 	coord sanitize_coord(coord value) const;
 
+	coord get_intermediate_cursor() const;
+
 	coord screen_pos_to_coord(const ImVec2& pos) const;
-	
+
 	string_view get_substring(int line_index, int column_index_first, int column_index_last) const;
 	string_view get_text_of_line_after(coord pos) const;
 	string_view get_text_of_line_before(coord pos) const;
-	
+
 	// This work like "select word on char" but with different categories (alnum, separators, space, others), not just alnum.
 	// @FIXME: Multi-byte char (UTF-8) are considered "others" but it should be properly handled.
 	coord_range get_range_of_same_char_at(coord value) const;
@@ -224,10 +234,7 @@ private:
 
 	std::vector<line> lines;
 
-	struct editor_state {
-		coord_range selection;
-		coord cursor_position;
-	} state;
+	coord_range selection;
 
 	bool text_changed;
 
@@ -239,11 +246,8 @@ private:
 	ImVec2 window_scroll;
 	ImVec2 graphical_char_size;
 
-	// To keep track of mouse selection gesture.
-	coord mouse_start_pos;
-
 	float last_click_time;
-	
+
 	bool need_to_scroll = false;
 	size_t line_to_scroll_to = 0;
 

@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "text_viewer.hpp"
 
 #include "imgui.h"
@@ -66,6 +64,10 @@ struct line_splitter {
 		return NULL;
 	}
 };
+
+template<typename T> static inline T min(T left, T right) { return left < right ? left : right; }
+template<typename T> static inline T max(T left, T right) { return left >= right ? left : right; }
+template<typename T> static inline T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
 
 static void render_line_number(const char* label);
 static size_t utf8_char_count(const char* str, size_t n);
@@ -202,61 +204,57 @@ std::string text_viewer::get_text(coord start, coord end) const
 
 std::string text_viewer::get_selected_text() const
 {
-	return get_text(state.selection.start, state.selection.end);
+	coord_range range = get_selection_range();
+	return get_text(range.start, range.end);
 }
 
 std::string text_viewer::get_selected_line_text() const
 {
-	auto lineLength = get_line_column_length(state.cursor_position.line);
+	coord pos = get_cursor_position();
 	return get_text(
-		coord(state.cursor_position.line, 0),
-		coord(state.cursor_position.line, lineLength));
+		sanitize_coord(coord(pos.line, 0)),
+		sanitize_coord(coord(pos.line, coord::column_int_max))
+	);
 }
 
 coord text_viewer::get_cursor_position() const
 {
-	return get_actual_cursor_coord();
+	return selection.end;
 }
 
 void text_viewer::set_cursor_position(coord pos)
 {
-	if (state.cursor_position != pos)
-	{
-		state.cursor_position = pos;
-	}
+	set_selection_end(pos);
 }
 
 coord_range text_viewer::get_selection_range() const
 {
-	return state.selection;
+	if (selection.start <= selection.end)
+	{
+		return selection;
+	}
+	return coord_range(selection.end, selection.start);
 }
 
 void text_viewer::set_selection_start(coord pos)
 {
-	state.selection.start = sanitize_coord(pos);
-
-	if (state.selection.start > state.selection.end)
-	{
-		std::swap(state.selection.start, state.selection.end);
-	}
+	selection.start = sanitize_coord(pos);
 }
 
 void text_viewer::set_selection_end(coord pos)
 {
-	state.selection.end = sanitize_coord(pos);
-
-	if (state.selection.start > state.selection.end)
-	{
-		std::swap(state.selection.start, state.selection.end);
-	}
+	selection.end = sanitize_coord(pos);
 }
 
 void text_viewer::set_selection(coord start, coord end)
 {
-	state.selection.start = sanitize_coord(start);
-	state.selection.end = sanitize_coord(end);
-	if (state.selection.start > state.selection.end)
-		std::swap(state.selection.start, state.selection.end);
+	set_selection_start(start);
+	set_selection_end(end);
+}
+
+void text_viewer::set_selection(coord_range range)
+{
+	set_selection(range.start, range.end);
 }
 
 void text_viewer::select_all()
@@ -266,7 +264,8 @@ void text_viewer::select_all()
 
 bool text_viewer::has_selection() const
 {
-	return state.selection.start < state.selection.end;
+	coord_range range = get_selection_range();
+	return range.start < range.end;
 }
 
 void text_viewer::copy_selection() const
@@ -277,10 +276,15 @@ void text_viewer::copy_selection() const
 	}
 	else
 	{
+		// @TODO this might be replaced with:
+		//    std::string str;
+		//    string_view line = get_selected_line_text();
+		//    str.insert(str.size(), line.text.data, line.text.size);
+		//    mGui::SetClipboardText(get().c_str());
 		if (!lines.empty())
 		{
 			std::string str;
-			auto& line = lines[get_actual_cursor_coord().line];
+			auto& line = lines[get_cursor_position().line];
 
 			str.insert(str.size(), line.text.data, line.text.size);
 
@@ -291,7 +295,7 @@ void text_viewer::copy_selection() const
 
 size_t text_viewer::get_selected_line_number() const
 {
-	return state.cursor_position.line + 1;
+	return line_index_to_line_number(get_cursor_position().line);
 }
 
 size_t text_viewer::line_number_to_line_index(size_t line_number) const
@@ -378,7 +382,7 @@ void text_viewer::render_core()
 			// Display line_number = number displayed to the user.
 			auto line_number = line_index_to_line_number(line_index);
 
-			bool line_is_selected = line_index == state.cursor_position.line;
+			bool line_is_selected = line_index == get_cursor_position().line;
 
 			if (options.display_line_selection && line_is_selected)
 			{
@@ -403,21 +407,26 @@ void text_viewer::render_core()
 
 				if (options.display_text_selection)
 				{
-					coord lineStartCoord(line_index, 0);
-					coord lineEndCoord(line_index, get_line_column_length(line_index));
+					coord line_start_coord(line_index, 0);
+					coord line_end_coord(line_index, get_line_column_length(line_index));
 
-					assert(state.selection.start <= state.selection.end);
-					if (state.selection.start <= lineEndCoord)
+					coord_range selection = get_selection_range();
+
+					assert(selection.start <= selection.end);
+					if (line_end_coord >= selection.start)
 					{
-						selection_start = state.selection.start > lineStartCoord ? text_distance_from_line_start(state.selection.start) : 0.0f;
+						selection_start = line_start_coord < selection.start
+							? text_distance_from_line_start(selection.start)
+							: 0.0f;
 					}
 
-					if (state.selection.end > lineStartCoord)
+					if (line_start_coord < selection.end)
 					{
-						selection_end = text_distance_from_line_start(state.selection.end < lineEndCoord ? state.selection.end : lineEndCoord);
+						coord coord = line_end_coord > selection.end  ? selection.end : line_end_coord;
+						selection_end = text_distance_from_line_start(coord);
 					}
 
-					if (state.selection.end.line > line_index)
+					if (line_index < selection.end.line)
 					{
 						selection_end += graphical_char_size.x;
 					}
@@ -438,6 +447,36 @@ void text_viewer::render_core()
 						ImVec2 selection_rect_min(line_start_screen_pos.x + selection_start, line_start_screen_pos.y);
 						ImVec2 selection_rect_max(line_start_screen_pos.x + selection_end, line_start_screen_pos.y + graphical_char_size.y);
 						draw_list->AddRectFilled(selection_rect_min, selection_rect_max, ImGui::GetColorU32(style.Colors[ImGuiCol_TextSelectedBg]));
+					}
+				}
+
+				if (options.debug_mode)
+				{
+					// Display selection start
+					if (selection.start.line == line_index)
+					{
+						float dist = selection.start.column * font_size;
+						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
+						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLines]));
+					}
+
+					// Display selection end
+					if (selection.end.line == line_index)
+					{
+						float dist = selection.end.column * font_size;
+						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
+						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
+					}
+
+					// Display the intermediate cursor.
+					if (get_intermediate_cursor().line == line_index)
+					{
+						float dist = get_intermediate_cursor().column * font_size;
+						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
+						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLinesHovered]));
 					}
 				}
 			}
@@ -515,42 +554,57 @@ int text_viewer::text_distance_to_column_index(string_view view, float distance)
 	return charCount;
 };
 
-coord text_viewer::get_actual_cursor_coord() const
+coord text_viewer::sanitize_coord(coord pos) const
 {
-	return sanitize_coord(state.cursor_position);
+	if (lines.empty())
+	{
+		return coord(0, 0);
+	}
+
+	int line = tv::clamp(pos.line, 0, (int)lines.size() - 1);
+	int column = tv::clamp(pos.column, 0, get_line_column_length(line));
+
+	return coord(line, column);
 }
 
-coord text_viewer::sanitize_coord(coord value) const
+coord text_viewer::get_intermediate_cursor() const
 {
-	auto line = value.line;
-	auto column = value.column;
-	if (line >= (int)lines.size())
-	{
-		if (lines.empty())
-		{
-			line = 0;
-			column = 0;
-		}
-		else
-		{
-			line = (int)lines.size() - 1;
-			column = get_line_column_length(line);
-		}
-		return coord(line, column);
-	}
-	else
-	{
-		column = lines.empty() ? 0 : std::min(column, get_line_column_length(line));
-		return coord(line, column);
-	}
+	// Get the line where the mouse cursor is, but get the column wheren the selection started.
+	// This allow use to better position the resulting cursor.
+	// Example:
+	// 
+	//    Hello,
+	//    I'm a human
+	// 
+	// If my cursor is inside 'human', when moving up the cursor should stick to the comma after "Hello".
+	// If a moving back the cursor I should be where I started inside 'human'
+	//
+	coord intermediate_cursor;
+	intermediate_cursor.line = get_cursor_position().line;
+	intermediate_cursor.column = selection.start.column;
+	return intermediate_cursor;
 }
 
 coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 {
+	if (lines.empty())
+	{
+		return coord(0, 0);
+	}
+
 	// Local pos relative to the parent window or child window.
 	ImVec2 local_pos(screen_pos - window_pos + window_scroll);
 
-	int line_index = std::max(0, (int)floor(local_pos.y / graphical_char_size.y));
+	int line_index = (int)floor(local_pos.y / graphical_char_size.y);
+
+	if (line_index < 0) {
+		line_index = 0;
+	}
+
+	if (line_index >= lines.size())
+	{
+		return sanitize_coord(coord(lines.size() - 1, coord::column_int_max));
+	}
 
 	int column_index = 0;
 
@@ -561,7 +615,7 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 		column_index = text_distance_to_column_index(line.text, local_pos.x - text_margin);
 	}
 
-	return sanitize_coord(coord(line_index, column_index));
+	return coord(line_index, column_index);
 }
 
 string_view text_viewer::get_substring(int line_index, int column_index_first, int column_index_last) const
@@ -661,7 +715,7 @@ coord_range text_viewer::get_range_of_same_char_at(coord value) const
 	string_view text = lines[value.line].text;
 	const char* begin = text.data;
 	const char* end = text.data + text.size;
-	
+
 	const char* char_at = get_byte_ptr_at(value);
 
 	if (char_at >= end)
@@ -786,30 +840,24 @@ void text_viewer::handle_mouse_inputs()
 				if (!ctrl)
 				{
 					coord pos = screen_pos_to_coord(ImGui::GetMousePos());
-					state.cursor_position = pos;
-					mouse_start_pos = pos;
 
-					// Select whole line
-					coord line_start(mouse_start_pos.line, 0);
-					coord line_end(mouse_start_pos.line, get_line_column_length(mouse_start_pos.line));
-					
+					coord line_start(pos.line, 0);
+					coord line_end(pos.line, get_line_column_length(pos.line));
+
 					set_selection(line_start, line_end);
 				}
 
 				last_click_time = -1.0f;
 			}
-			//Left mouse button double click
+			// Left mouse button double click
 			else if (left_double_click)
 			{
 				if (!ctrl)
 				{
 					coord pos = screen_pos_to_coord(ImGui::GetMousePos());
-					state.cursor_position = pos;
-					mouse_start_pos = pos;
-
 					coord_range r = get_range_of_same_char_at(pos);
 
-					set_selection(r.start, r.end);
+					set_selection(r);
 				}
 
 				last_click_time = (float)ImGui::GetTime();
@@ -818,26 +866,23 @@ void text_viewer::handle_mouse_inputs()
 			else if (left_click)
 			{
 				coord pos = screen_pos_to_coord(ImGui::GetMousePos());
-				state.cursor_position = pos;
-				mouse_start_pos = pos;
 
-				coord_range r(mouse_start_pos, mouse_start_pos);
+				coord_range r(pos, pos);
 				if (ctrl)
 				{
 					r = get_range_of_same_char_at(pos);
 				}
-				set_selection(r.start, r.end);
+
+				set_selection(r);
 
 				last_click_time = (float)ImGui::GetTime();
 			}
-			// Mouse left button dragging (=> update selection)
-			else if (ImGui::IsMouseDragging(0) && ImGui::IsMouseDown(0))
+			// Update selection on mouse dragging.
+			else if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && ImGui::IsMouseDown(ImGuiMouseButton_Left))
 			{
 				io.WantCaptureMouse = true;
 				coord pos = screen_pos_to_coord(ImGui::GetMousePos());
-				state.cursor_position = pos;
-				coord_range r(mouse_start_pos, pos);
-				set_selection(r.start, r.end);
+				set_selection_end(pos);
 			}
 		}
 	}
