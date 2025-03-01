@@ -321,6 +321,31 @@ void text_viewer::scroll_to_line_index(size_t line_index)
 	line_to_scroll_to = line_index;
 }
 
+coord text_viewer::cursor_translated_y(int delta)
+{
+	coord position_to_translate = get_intermediate_cursor();
+
+	position_to_translate.line += delta;
+
+	// If the resulting line is smaller than the first line index,
+	// we want the coordinate to be on the first char (0,0).
+	if (position_to_translate.line < 0)
+	{
+		return coord(0, 0);
+	}
+
+	// If the resulting line greated than the last line index,
+	// we set the coordinate to (last, infinite+) to set it to the maximum posible location
+	// The coordinate will get sanitize and it prevents us to count the number of character
+	// in a UTF-8 line.
+	if (position_to_translate.line >= lines.size())
+	{
+		return coord(lines.size(), coord::column_int_max);
+	}
+
+	return position_to_translate;
+}
+
 bool text_viewer::need_to_split_text() const
 {
 	return current_text.size || text_changed;
@@ -812,6 +837,31 @@ void text_viewer::handle_keyboard_inputs()
 			copy_selection();
 		else if (ctrl && !shift && !alt && ImGui::IsKeyPressed(ImGuiKey_A))
 			select_all();
+		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+		{
+			coord new_pos = cursor_translated_y(-1);
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
+		}
+		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+		{
+			coord new_pos = cursor_translated_y(+1);
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
+		}
+		// @TODO handle page up and page down.
+		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
+		{
+			// @TODO
+		}
+		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageDown))
+		{
+			// @TODO
+		}
 	}
 }
 
