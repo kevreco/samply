@@ -222,6 +222,7 @@ private:
 
 	coord screen_pos_to_coord(const ImVec2& pos) const;
 
+	// Get substring withing a line.
 	string_view get_substring(int line_index, int column_index_first, int column_index_last) const;
 	string_view get_text_of_line_after(coord pos) const;
 	string_view get_text_of_line_before(coord pos) const;

@@ -364,7 +364,6 @@ void text_viewer::render_core()
 	const float font_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
 	graphical_char_size = ImVec2(font_size, ImGui::GetTextLineHeightWithSpacing());
 
-	auto region_avail = ImGui::GetContentRegionAvail();
 	auto draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
@@ -514,7 +513,6 @@ void text_viewer::render_core()
 		}
 	}
 }
-
 
 float text_viewer::text_distance_from_line_start(coord pos) const
 {
