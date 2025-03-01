@@ -228,7 +228,9 @@ namespace ui {
         ImGui::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
         {
             ImGui::BeginChild("Top", ImVec2(avail_size.x, horiz_split_pos));
-            
+
+/* Vertical splitter until the list of report is functional. */
+#if 0
             avail_size = ImGui::GetContentRegionAvail();
             
             static float vertical_split_pos = avail_size.x / 3; // Position the splitter at the third of the area.
@@ -244,6 +246,7 @@ namespace ui {
             }
             
             ImGui::SameLine();
+#endif
             // Top Right
             {
                 show_report_grid(gui);
