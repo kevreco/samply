@@ -268,26 +268,18 @@ bool text_viewer::has_selection() const
 
 void text_viewer::copy_selection() const
 {
+	// Copy selected text
 	if (has_selection())
 	{
 		ImGui::SetClipboardText(get_selected_text().c_str());
 	}
+	// Otherwise copy the selected line
 	else
 	{
-		// @TODO this might be replaced with:
-		//    std::string str;
-		//    string_view line = get_selected_line_text();
-		//    str.insert(str.size(), line.text.data, line.text.size);
-		//    mGui::SetClipboardText(get().c_str());
-		if (!lines.empty())
-		{
-			std::string str;
-			auto& line = lines[get_cursor_position().line];
+		string_view line = get_selected_line_text();
+		std::string str(line.data, line.size);
 
-			str.insert(str.size(), line.text.data, line.text.size);
-
-			ImGui::SetClipboardText(str.c_str());
-		}
+		ImGui::SetClipboardText(str.c_str());
 	}
 }
 
