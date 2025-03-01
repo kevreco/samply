@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
@@ -236,7 +235,7 @@ private:
 
 	string_view current_text;
 
-	std::vector<line> lines;
+	ImVector<line> lines;
 
 	coord_range selection;
 

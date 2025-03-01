@@ -632,7 +632,7 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 
 	if (line_index >= 0 && line_index < (int)lines.size())
 	{
-		auto& line = lines.at(line_index);
+		auto& line = lines[line_index];
 
 		column_index = text_distance_to_column_index(line.text, local_pos.x - text_margin);
 	}
