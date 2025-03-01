@@ -70,21 +70,26 @@ int main() {
             if (ImGui::CollapsingHeader("Text Viewer Options"))
             {
                 // Options
+                float indent_offset = 220.0f;
                 ImGui::Text("Options:");
                 ImGui::Checkbox("Allow Keyboard Inputs", &viewer.options.allow_keyboard_inputs);
-                ImGui::SameLine();
+                ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Allow Mouse Inputs", &viewer.options.allow_mouse_inputs);
                 
 
                 ImGui::Checkbox("Display Text Selection", &viewer.options.display_text_selection);
-                ImGui::SameLine();
+                ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Display Line Selection", &viewer.options.display_line_selection);
                
-                ImGui::Checkbox("Display Line Prelude ", &viewer.options.display_line_prelude);
-                ImGui::SameLine();
-                ImGui::Checkbox("Display Line Number ", &viewer.options.display_line_number);
-                // Extra
-                ImGui::Text("API use:");
+                ImGui::Checkbox("Display Line Prelude", &viewer.options.display_line_prelude);
+                ImGui::SameLine(indent_offset);
+                ImGui::Checkbox("Display Line Number", &viewer.options.display_line_number);
+
+                ImGui::Checkbox("Debug Mode", &viewer.options.debug_mode);
+            }
+
+            if (ImGui::CollapsingHeader("API Use"))
+            {
                 ImGui::Checkbox("Display Selection Coordinates", &print_selection_coord);
                 ImGui::Checkbox("Display Cursor Coordinate", &print_cursor_coord);
                 ImGui::Checkbox("Display Selected Line Number Coordinate", &print_selected_line_number);
@@ -152,7 +157,6 @@ int main() {
                     if (ImGui::BeginChild("Selected Line Text", ImVec2(-FLT_MIN, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle | ImGuiChildFlags_AutoResizeY))
                         ImGui::Text(TV_SV_FMT, TV_SV_ARG(viewer.get_selected_line_text()));
                     ImGui::EndChild();
-                    ImGui::Separator();
                 }
                 ImGui::EndChild();
             }
