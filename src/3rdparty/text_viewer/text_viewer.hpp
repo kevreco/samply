@@ -158,6 +158,10 @@ struct text_viewer
 	std::string get_text(coord start, coord end) const;
 	std::string get_selected_text() const;
 
+	// Get line count of current text.
+	// NOTE: this value is updated only when the text is rendered at least once.
+	int get_text_line_count() const;
+
 	string_view get_selected_line_text() const;
 
 	coord get_cursor_position() const;

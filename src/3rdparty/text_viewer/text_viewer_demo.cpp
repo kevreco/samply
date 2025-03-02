@@ -95,6 +95,15 @@ int main() {
                 ImGui::Checkbox("Display Selected Line Number Coordinate", &print_selected_line_number);
                 ImGui::Checkbox("Get Selected Text", &print_selected_text);
                 ImGui::Checkbox("Get Selected Line Text", &print_selected_line_text);
+
+                static int line_index_to_scroll_to = 0; ;
+
+                ImGui::SetNextItemWidth(80.0f);
+               
+                if (ImGui::DragInt("Scroll to line", &line_index_to_scroll_to, 0.2f, 0, viewer.get_text_line_count()))
+                {
+                    viewer.scroll_to_line_index(line_index_to_scroll_to);
+                }
             }
 
             {

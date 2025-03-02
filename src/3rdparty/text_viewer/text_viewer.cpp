@@ -209,6 +209,11 @@ std::string text_viewer::get_selected_text() const
 	return get_text(range.start, range.end);
 }
 
+int text_viewer::get_text_line_count() const
+{
+	return lines.size();
+}
+
 string_view text_viewer::get_selected_line_text() const
 {
 	coord pos = get_cursor_position();
