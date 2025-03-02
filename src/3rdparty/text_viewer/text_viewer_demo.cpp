@@ -98,9 +98,14 @@ int main() {
             }
 
             {
-                ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
 
-                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle, window_flags);
+                ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysHorizontalScrollbar;
+                // Add No nav to avoid some undesiredeffect when moving up and down with the keyboard.
+                // The windows will try to scroll once and immediatly reposition itself
+                // due to the changing selection on the text viewer side.
+                window_flags |= ImGuiWindowFlags_NoNav;
+
+                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle , window_flags);
 
                 viewer.render();
 
