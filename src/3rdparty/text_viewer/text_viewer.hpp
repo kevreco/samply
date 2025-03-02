@@ -249,6 +249,8 @@ private:
 	ImVector<line> lines;
 
 	coord_range selection;
+	// Only used to know when the current selection changed.
+	coord previous_cursor_position; 
 
 	bool text_changed;
 

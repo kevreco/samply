@@ -371,6 +371,16 @@ void text_viewer::render_core()
 	const float font_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
 	graphical_char_size = ImVec2(font_size, ImGui::GetTextLineHeightWithSpacing());
 
+	// Flag cursor change
+	bool cursor_changed = false;
+	{
+		if (previous_cursor_position != get_cursor_position())
+		{
+			cursor_changed = true;
+		}
+		previous_cursor_position = get_cursor_position();
+	}
+
 	auto draw_list = ImGui::GetWindowDrawList();
 
 	ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
@@ -382,11 +392,20 @@ void text_viewer::render_core()
 
 	clipper.Begin(lines.size());
 
-	bool need_to_scroll_this_frame = line_to_scroll_to >= 0;
-	int scroll_at = line_to_scroll_to;
-	// Scroll if require. This override the "IncludeItemByIndex" from the cursor changed.
-	if (need_to_scroll_this_frame)
+	int scroll_at = 0;
+	if (cursor_changed)
 	{
+		scroll_at = get_cursor_position().line;
+		clipper.IncludeItemByIndex(scroll_at);
+	}
+
+	bool scroll_requested = line_to_scroll_to >= 0;
+
+	// Scroll if requested.
+	// This override the "IncludeItemByIndex" from the cursor change above.
+	if (scroll_requested)
+	{
+		scroll_at = line_to_scroll_to;
 		line_to_scroll_to = -1;
 
 		// Force display of specified line.
@@ -452,12 +471,34 @@ void text_viewer::render_core()
 					}
 				}
 
-				ImGui::Text(TV_SV_FMT, TV_SV_ARG(line.text));
-
-				if (need_to_scroll_this_frame && scroll_at == line_index)
+				// Display text line
 				{
-					// Scroll right at the previous item.
-					ImGui::SetScrollHereY(0.1f);
+					// Display a space in case the text is empty because we still need a bounding box to scroll to.
+					static string_view text_with_single_space(" ", 1);
+					string_view text_to_display = line.text.size ? line.text : text_with_single_space;
+
+					ImGui::Text(TV_SV_FMT, TV_SV_ARG(text_to_display));
+				}
+
+				// Scroll if needed
+				{
+					if (scroll_requested && scroll_at == line_index)
+					{
+						// Scroll right at the previous item.
+						ImGui::SetScrollHereY(0.1f);
+					}
+
+					ImRect last_item_rect(ImVec2(0, ImGui::GetItemRectMin().y), ImGui::GetItemRectMax());
+
+					if (options.debug_mode && get_cursor_position().line == line_index)
+					{
+						draw_list->AddRect(last_item_rect.Min, last_item_rect.Max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLines]));
+					}
+					// Scroll to cursor it it changed.
+					if (cursor_changed && scroll_at == line_index && !ImGui::IsItemVisible())
+					{
+						ImGui::ScrollToRect(ImGui::GetCurrentWindow(), last_item_rect);
+					}
 				}
 
 				if (options.display_text_selection)
