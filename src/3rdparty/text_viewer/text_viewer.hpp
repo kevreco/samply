@@ -262,8 +262,7 @@ private:
 
 	float last_click_time;
 
-	bool need_to_scroll = false;
-	int line_to_scroll_to = 0;
+	int line_to_scroll_to = -1;
 
 public:
 

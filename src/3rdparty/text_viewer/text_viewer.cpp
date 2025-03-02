@@ -305,14 +305,16 @@ int text_viewer::line_index_to_line_number(int line_index) const
 
 void text_viewer::scroll_to_line_number(int line_number)
 {
-	need_to_scroll = true;
-	line_to_scroll_to = line_number_to_line_index(line_number);
+	line_to_scroll_to = line_number < 1
+		? 1
+		: line_number_to_line_index(line_number);
 }
 
 void text_viewer::scroll_to_line_index(int line_index)
 {
-	need_to_scroll = true;
-	line_to_scroll_to = line_index;
+	line_to_scroll_to = line_index < 0
+		? 0
+		: line_index;
 }
 
 coord text_viewer::cursor_translated_y(int delta)
@@ -380,15 +382,15 @@ void text_viewer::render_core()
 
 	clipper.Begin(lines.size());
 
-	bool need_to_scroll_this_frame = need_to_scroll;
+	bool need_to_scroll_this_frame = line_to_scroll_to >= 0;
 	int scroll_at = line_to_scroll_to;
-	if (need_to_scroll)
+	// Scroll if require. This override the "IncludeItemByIndex" from the cursor changed.
+	if (need_to_scroll_this_frame)
 	{
-		need_to_scroll = false;
-		line_to_scroll_to = 0;
+		line_to_scroll_to = -1;
 
 		// Force display of specified line.
-		clipper.ForceDisplayRangeByIndices(scroll_at, scroll_at + 1);
+		clipper.IncludeItemByIndex(scroll_at);
 	}
 
 	while (clipper.Step())
