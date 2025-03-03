@@ -825,6 +825,13 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 	return coord(line_index, column_index);
 }
 
+int text_viewer::possible_line_per_page() const
+{
+	auto height = ImGui::GetWindowHeight();
+	return (int)floor(height / graphical_char_size.y);
+}
+
+
 string_view text_viewer::get_substring(int line_index, int column_index_first, int column_index_last) const
 {
 	assert(column_index_first <= column_index_last);
@@ -1035,14 +1042,21 @@ void text_viewer::handle_keyboard_inputs()
 			else
 				set_selection(new_pos, new_pos);
 		}
-		// @TODO handle page up and page down.
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
 		{
-			// @TODO
+			coord new_pos = cursor_translated_y( - possible_line_per_page());
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageDown))
 		{
-			// @TODO
+			coord new_pos = cursor_translated_y( + possible_line_per_page());
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
 		}
 	}
 }
