@@ -592,7 +592,7 @@ void text_viewer::render_core()
 		clipper.IncludeItemByIndex(scroll_at);
 	}
 
-	bool is_first = true;
+	bool is_first_iteration = true;
 	while (clipper.Step())
 	{
 		// line_index: 0-based index
@@ -633,9 +633,9 @@ void text_viewer::render_core()
 
 					line_bb = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
-					if (is_first)
+					if (is_first_iteration)
 					{
-						is_first = false;
+						is_first_iteration = false;
 
 						// Update text_margin according to the size of everything before that.
 						// This is currently the line number display but there might be other custom items.
@@ -711,13 +711,14 @@ void text_viewer::render_core()
 				if (options.display_cursor && line_is_selected)
 				{
 					// Render two straight lines to avoid anti aliasing of rectangles.
-					float dist = floor(text_distance_from_line_start(get_cursor_position()));
+					float dist = (float)floor(text_distance_from_line_start(get_cursor_position()));
 					ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
 					ImVec2 max(line_bb.Min.x + dist, line_bb.Max.y);
-					draw_list->AddLine(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
-					min.x += 1.f;
-					max.x += 1.f;
-					draw_list->AddLine(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
+					ImU32 color = ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]);
+					draw_list->AddLine(min, max, color);
+					min.x += 1.0f;
+					max.x += 1.0f;
+					draw_list->AddLine(min, max, color);
 				}
 
 				if (options.debug_mode)
@@ -875,7 +876,7 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 	return coord(line_index, column_index);
 }
 
-int text_viewer::possible_line_per_page() const
+int text_viewer::max_visible_line_per_page() const
 {
 	auto height = ImGui::GetWindowHeight();
 	return (int)floor(height / graphical_char_size.y);
@@ -1094,7 +1095,7 @@ void text_viewer::handle_keyboard_inputs()
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
 		{
-			coord new_pos = cursor_translated_y( - possible_line_per_page());
+			coord new_pos = cursor_translated_y( - max_visible_line_per_page());
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
@@ -1102,7 +1103,7 @@ void text_viewer::handle_keyboard_inputs()
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageDown))
 		{
-			coord new_pos = cursor_translated_y( + possible_line_per_page());
+			coord new_pos = cursor_translated_y( + max_visible_line_per_page());
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else

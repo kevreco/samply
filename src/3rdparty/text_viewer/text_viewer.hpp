@@ -231,7 +231,7 @@ private:
 
 	coord screen_pos_to_coord(const ImVec2& pos) const;
 
-	int possible_line_per_page() const;
+	int max_visible_line_per_page() const;
 
 	// Get substring withing a line.
 	string_view get_substring(int line_index, int column_index_first, int column_index_last) const;
@@ -256,7 +256,7 @@ private:
 	ImVector<line> lines;
 
 	coord_range selection;
-	int anchor_column;
+	int anchor_column = 0;
 	// Only used to know when the current selection changed.
 	coord previous_cursor_position; 
 
@@ -264,7 +264,7 @@ private:
 
 	// Position (in pixels) where a code line starts relative
 	// to the left of window containingthe text viewer.
-	float text_margin;
+	float text_margin = 0.0f;
 
 	ImVec2 window_pos;
 	ImVec2 window_scroll;
