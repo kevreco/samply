@@ -113,6 +113,7 @@ namespace tv
 
 	typedef void (*line_prelude_renderer)(struct options* options, int line_number, bool line_is_selected);
 
+	ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 background_color, int flags = 0);
 	void default_line_prelude_renderer(struct options* options, int line_number, bool line_is_selected);
 
 	struct options {
@@ -260,6 +261,7 @@ private:
 
 	ImVec2 window_pos;
 	ImVec2 window_scroll;
+	ImVec2 window_padding;
 	ImVec2 graphical_char_size;
 
 	float last_click_time;

@@ -69,7 +69,7 @@ template<typename T> static inline T min(T left, T right) { return left < right 
 template<typename T> static inline T max(T left, T right) { return left >= right ? left : right; }
 template<typename T> static inline T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
 
-static void render_line_number(const char* label);
+static void render_line_number(const char* text_begin, const char* text_end);
 static int utf8_char_count(const char* str, int n);
 static const char* utf8_goto_previous_codepoint(const char* const begin, const char* cursor);
 static const char* utf8_goto_next_codepoint(const char* const cursor, const char* const end);
@@ -86,7 +86,7 @@ void default_line_prelude_renderer(struct options* options, int line_number, boo
 		char line_num_buf[64];
 		snprintf(line_num_buf, 64, "%05d", line_number);
 
-		render_line_number(line_num_buf);
+		render_line_number(line_num_buf, line_num_buf + strlen(line_num_buf));
 
 		ImGui::SameLine();
 
@@ -95,6 +95,151 @@ void default_line_prelude_renderer(struct options* options, int line_number, boo
 			ImGui::EndDisabled();
 		}
 	}
+}
+
+// This item has been shaped like ImGui::Selectable.
+// It allows to have an item with a bounding box than can expand to the available width.
+// The text is vertically centered, and it correctly takes the item spacing into account.
+// The default ImGui::Selectable could create an item which is position *before* the 
+// CursorPosition, which made various computing close to impossible to perform.
+// 
+// Here are the possible flags:
+//     - ImGuiSelectableFlags_Highlight :
+//         This behavior changed compared to the original ImGui::Selectable,
+//         Allow frame highligthing depending on wether the item is hovered, or "pushed" (mouse hover + mouse pressed).
+//     - ImGuiSelectableFlags_SpanAllColumns : See ImGui documentation.
+//     - ImGuiSelectableFlags_SpanAvailWidth : See ImGui documentation
+//     - ImGuiSelectableFlags_Disabled : See ImGui documentation.
+//     - ImGuiSelectableFlags_NoAutoClosePopups : See ImGui documentation.
+// 
+// Returns local window coordinate of the beginning of the text (top left)
+ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 background_color, int flags)
+{
+	using namespace ImGui;
+
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems)
+		return ImVec2(-1.0f, -1.0f);
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+
+	// Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
+	ImGuiID id = 0;
+	if (label)
+	{
+		id = window->GetID(label);
+	}
+
+	ImVec2 text_size = CalcTextSize(begin, end, true);
+	ImVec2 size_arg;
+	ImVec2 size(size_arg.x != 0.0f ? size_arg.x : text_size.x, size_arg.y != 0.0f ? size_arg.y : text_size.y);
+	ImVec2 pos = window->DC.CursorPos;
+
+	ItemSize(size, 0.0f);
+
+	// Fill horizontal space
+	// We don't support (size < 0.0f) in Selectable() because the ItemSpacing extension would make explicitly right-aligned sizes not visibly match other widgets.
+	const bool span_all_columns = (flags & ImGuiSelectableFlags_SpanAllColumns) != 0;
+	const float min_x = span_all_columns ? window->ParentWorkRect.Min.x : pos.x;
+	const float max_x = span_all_columns ? window->ParentWorkRect.Max.x : window->WorkRect.Max.x;
+	if ((flags & ImGuiSelectableFlags_SpanAvailWidth))
+		size.x = tv::max(text_size.x, max_x - min_x);
+
+	// Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
+	// FIXME: Not part of layout so not included in clipper calculation, but ItemSize currently doesn't allow offsetting CursorPos.
+	ImRect bb(min_x, pos.y, min_x + size.x, pos.y + size.y);
+	//if ((flags & ImGuiSelectableFlags_NoPadWithHalfSpacing) == 0)
+	{
+		bb.Max.y += style.ItemSpacing.y;
+		pos.y += style.ItemSpacing.y * 0.5f;
+	}
+
+	const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
+	const ImGuiItemFlags extra_item_flags = disabled_item ? (ImGuiItemFlags)ImGuiItemFlags_Disabled : ImGuiItemFlags_None;
+	bool is_visible;
+	if (span_all_columns)
+	{
+		// Modify ClipRect for the ItemAdd(), faster than doing a PushColumnsBackground/PushTableBackgroundChannel for every Selectable..
+		const float backup_clip_rect_min_x = window->ClipRect.Min.x;
+		const float backup_clip_rect_max_x = window->ClipRect.Max.x;
+		window->ClipRect.Min.x = window->ParentWorkRect.Min.x;
+		window->ClipRect.Max.x = window->ParentWorkRect.Max.x;
+		is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
+		window->ClipRect.Min.x = backup_clip_rect_min_x;
+		window->ClipRect.Max.x = backup_clip_rect_max_x;
+	}
+	else
+	{
+		is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
+	}
+
+	if (!is_visible)
+		return ImVec2(-1.0f, -1.0f);
+
+	const bool disabled_global = (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
+	if (disabled_item && !disabled_global) // Only testing this as an optimization
+		BeginDisabled();
+
+	// FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
+	// which would be advantageous since most selectable are not selected.
+	if (span_all_columns)
+	{
+		if (g.CurrentTable)
+			TablePushBackgroundChannel();
+		else if (window->DC.CurrentColumns)
+			PushColumnsBackground();
+		g.LastItemData.StatusFlags |= ImGuiItemStatusFlags_HasClipRect;
+		g.LastItemData.ClipRect = window->ClipRect;
+	}
+
+	bool hovered = false;
+	bool pushed = false;
+
+	if (IsItemHovered())
+	{
+		hovered = true;
+		if (IsMouseDown(ImGuiMouseButton_Left, id))
+		{
+			pushed = true;
+		}
+	}
+
+	// Render
+	if (is_visible)
+	{
+		if (background_color > 0)
+		{
+			RenderFrame(bb.Min, bb.Max, background_color, false, 0.0f);
+		}
+
+		const bool can_highlight = (flags & ImGuiSelectableFlags_Highlight);
+		if (can_highlight && (hovered || pushed))
+		{
+			ImU32 col = GetColorU32(pushed ? ImGuiCol_HeaderActive : (hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header));
+			RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
+		}
+	}
+
+	if (span_all_columns)
+	{
+		if (g.CurrentTable)
+			TablePopBackgroundChannel();
+		else if (window->DC.CurrentColumns)
+			PopColumnsBackground();
+	}
+
+	if (is_visible)
+		RenderText(pos, begin, end);
+
+	// Automatically close popups
+	if (pushed && (window->Flags & ImGuiWindowFlags_Popup) && !(flags & ImGuiSelectableFlags_NoAutoClosePopups) && (g.LastItemData.ItemFlags & ImGuiItemFlags_AutoClosePopups))
+		CloseCurrentPopup();
+
+	if (disabled_item && !disabled_global)
+		EndDisabled();
+
+	return pos - window->Pos + window->Scroll;
 }
 
 int text_viewer::line::get_utf8_char_count() const
@@ -109,7 +254,6 @@ int text_viewer::line::get_utf8_char_count() const
 text_viewer::text_viewer()
 	: current_text()
 	, text_changed(false)
-	, text_margin(10.0f)
 	, last_click_time(-1.0f)
 {
 }
@@ -121,6 +265,7 @@ void text_viewer::render()
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 	window_pos = window->Pos;
 	window_scroll = window->Scroll;
+	window_padding = window->WindowPadding;
 
 	if (need_to_split_text())
 	{
@@ -369,7 +514,7 @@ void text_viewer::render_core()
 
 	// Compute graphical_char_size regarding to scaled font size (Ctrl + mouse wheel)
 	const float font_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
-	graphical_char_size = ImVec2(font_size, ImGui::GetTextLineHeightWithSpacing());
+	graphical_char_size.x = font_size;
 
 	// Flag cursor change
 	bool cursor_changed = false;
@@ -383,10 +528,8 @@ void text_viewer::render_core()
 
 	auto draw_list = ImGui::GetWindowDrawList();
 
-	ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
-
-	ImVec2 line_selection_rect_min;
-	ImVec2 line_selection_rect_max;
+	// Selected line bounding box
+	ImRect selected_line_bb;
 
 	ImGuiListClipper clipper;
 
@@ -412,6 +555,7 @@ void text_viewer::render_core()
 		clipper.IncludeItemByIndex(scroll_at);
 	}
 
+	bool is_first = true;
 	while (clipper.Step())
 	{
 		// line_index: 0-based index
@@ -423,26 +567,50 @@ void text_viewer::render_core()
 
 			bool line_is_selected = line_index == get_cursor_position().line;
 
-			if (options.display_line_selection && line_is_selected)
-			{
-				line_selection_rect_min.y = ImGui::GetCursorScreenPos().y;
-			}
-
 			if (options.display_line_prelude)
 			{
 				options.line_prelude(&options, line_number, line_is_selected);
 			}
 
-			// Update text_margin according to the size of everything before that.
-			// This is currently the line number display but there might be other custom items.
-			text_margin = ImGui::GetCursorPos().x;
-
 			{
-				cursor_screen_pos.x = ImGui::GetCursorScreenPos().x;
-				ImVec2 line_start_screen_pos = ImVec2(cursor_screen_pos.x, cursor_screen_pos.y + line_index * graphical_char_size.y);
-
 				float selection_start = -1.0f;
 				float selection_end = -1.0f;
+				
+				// Current line bounding box.
+				ImRect line_bb;
+
+				// Display text line
+				{
+					// Display a space in case the text is empty because we still need a bounding box to scroll to.
+					static string_view text_with_single_space(" ", 1);
+					string_view text_to_display = line.text.size ? line.text : text_with_single_space;
+
+					char line_label[64];
+					snprintf(line_label, 64, "##%d", line_index);
+
+					int text_line_flags = ImGuiSelectableFlags_SpanAvailWidth;
+					ImVec2 local_text_pos = render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, text_line_flags);
+
+					line_bb = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+
+					if (is_first)
+					{
+						is_first = false;
+
+						// Update text_margin according to the size of everything before that.
+						// This is currently the line number display but there might be other custom items.
+						text_margin = local_text_pos.x;
+
+						graphical_char_size.y = line_bb.GetHeight();
+					}
+				}
+
+				if (line_is_selected)
+				{
+					selected_line_bb = line_bb;
+					// Allow 1 pixel wider on bottom side to make it overlap the top line of the line below.
+					selected_line_bb.Max.y += 1.0f;
+				}
 
 				if (options.display_text_selection)
 				{
@@ -461,7 +629,7 @@ void text_viewer::render_core()
 
 					if (line_start_coord < selection.end)
 					{
-						coord coord = line_end_coord > selection.end  ? selection.end : line_end_coord;
+						coord coord = line_end_coord > selection.end ? selection.end : line_end_coord;
 						selection_end = text_distance_from_line_start(coord);
 					}
 
@@ -469,15 +637,6 @@ void text_viewer::render_core()
 					{
 						selection_end += graphical_char_size.x;
 					}
-				}
-
-				// Display text line
-				{
-					// Display a space in case the text is empty because we still need a bounding box to scroll to.
-					static string_view text_with_single_space(" ", 1);
-					string_view text_to_display = line.text.size ? line.text : text_with_single_space;
-
-					ImGui::Text(TV_SV_FMT, TV_SV_ARG(text_to_display));
 				}
 
 				// Scroll if needed
@@ -505,8 +664,8 @@ void text_viewer::render_core()
 				{
 					if (selection_start != -1 && selection_end != -1 && selection_start < selection_end)
 					{
-						ImVec2 selection_rect_min(line_start_screen_pos.x + selection_start, line_start_screen_pos.y);
-						ImVec2 selection_rect_max(line_start_screen_pos.x + selection_end, line_start_screen_pos.y + graphical_char_size.y);
+						ImVec2 selection_rect_min(line_bb.Min.x + selection_start, line_bb.Min.y);
+						ImVec2 selection_rect_max(line_bb.Min.x + selection_end, line_bb.Max.y);
 						draw_list->AddRectFilled(selection_rect_min, selection_rect_max, ImGui::GetColorU32(style.Colors[ImGuiCol_TextSelectedBg]));
 					}
 				}
@@ -517,8 +676,8 @@ void text_viewer::render_core()
 					if (selection.start.line == line_index)
 					{
 						float dist = selection.start.column * font_size;
-						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
-						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
+						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLines]));
 					}
 
@@ -526,8 +685,8 @@ void text_viewer::render_core()
 					if (selection.end.line == line_index)
 					{
 						float dist = selection.end.column * font_size;
-						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
-						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
+						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
 					}
 
@@ -535,29 +694,17 @@ void text_viewer::render_core()
 					if (get_intermediate_cursor().line == line_index)
 					{
 						float dist = get_intermediate_cursor().column * font_size;
-						ImVec2 min(line_start_screen_pos.x + dist, line_start_screen_pos.y);
-						ImVec2 max(line_start_screen_pos.x + dist + 3.f, line_start_screen_pos.y + graphical_char_size.y);
+						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
+						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLinesHovered]));
 					}
 				}
-			}
-
-			// Save line selection rectangle
-			if (options.display_line_selection && line_is_selected)
-			{
-				line_selection_rect_min.x = window->ParentWorkRect.Min.x;
-				line_selection_rect_max.x = window->ParentWorkRect.Max.x;
-				line_selection_rect_max.y = ImGui::GetCursorScreenPos().y;
 			}
 		}
 
 		if (options.display_line_selection)
 		{
-			if (line_selection_rect_max.y - line_selection_rect_min.y > 0.0f)
-			{
-				// Draw after the loop since we want the selection to be on top of all other drawing
-				draw_list->AddRect(line_selection_rect_min, line_selection_rect_max, ImGui::GetColorU32(style.Colors[ImGuiCol_ButtonActive]));
-			}
+			draw_list->AddRect(selected_line_bb.Min, selected_line_bb.Max, ImGui::GetColorU32(style.Colors[ImGuiCol_NavCursor]));
 		}
 	}
 }
@@ -655,7 +802,7 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 	// Local pos relative to the parent window or child window.
 	ImVec2 local_pos(screen_pos - window_pos + window_scroll);
 
-	int line_index = (int)floor(local_pos.y / graphical_char_size.y);
+	int line_index = (int)floor((local_pos.y - window_padding.y) / graphical_char_size.y);
 
 	if (line_index < 0) {
 		line_index = 0;
@@ -973,37 +1120,9 @@ void text_viewer::handle_mouse_inputs()
 	}
 }
 
-static void render_line_number(const char* label)
+static void render_line_number(const char* text_begin, const char* text_end)
 {
-	auto& style = ImGui::GetStyle();
-	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	ImVec2 size_arg = ImVec2(0, 0);
-
-	// Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
-	ImGuiID id = window->GetID(label);
-	ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
-	ImVec2 size = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y);
-	ImVec2 pos = window->DC.CursorPos;
-	pos.y += window->DC.CurrLineTextBaseOffset;
-
-	ImRect bb(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
-
-	const float spacing_L = IM_TRUNC(style.ItemSpacing.x * 0.50f);
-	const float spacing_U = IM_TRUNC(style.ItemSpacing.y * 0.50f);
-
-	bb.Translate(ImVec2(-spacing_L, -spacing_U));
-	bb.Max += style.ItemSpacing;
-
-	ImGui::ItemSize(size, 0);
-	if (!ImGui::ItemAdd(bb, id))
-	{
-		return;
-	}
-
-	ImU32 col = ImGui::GetColorU32(ImGuiCol_WindowBg);
-	ImGui::RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
-
-	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, NULL, &label_size, style.ButtonTextAlign, &bb);
+	render_text_line(text_begin, text_end, NULL, ImGui::GetColorU32(ImGuiCol_WindowBg));
 }
 
 static int utf8_char_count(const char* str, int n)
