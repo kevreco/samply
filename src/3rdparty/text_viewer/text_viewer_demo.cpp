@@ -81,13 +81,11 @@ int main() {
                 ImGui::Checkbox("Display Cursor", &viewer.options.display_cursor);
                 ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Display Text Selection", &viewer.options.display_text_selection);
-                
-                ImGui::Checkbox("Display Line Selection", &viewer.options.display_line_selection);
-                ImGui::SameLine(indent_offset);
+
                 ImGui::Checkbox("Display Line Prelude", &viewer.options.display_line_prelude);
-                
-                ImGui::Checkbox("Display Line Number", &viewer.options.display_line_number);
                 ImGui::SameLine(indent_offset);
+                ImGui::Checkbox("Display Line Number", &viewer.options.display_line_number);
+
                 ImGui::Checkbox("Debug Mode", &viewer.options.debug_mode);
             }
 
