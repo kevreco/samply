@@ -69,7 +69,6 @@ template<typename T> static inline T min(T left, T right) { return left < right 
 template<typename T> static inline T max(T left, T right) { return left >= right ? left : right; }
 template<typename T> static inline T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
 
-static void render_line_number(const char* text_begin, const char* text_end);
 static int utf8_char_count(const char* str, int n);
 static const char* utf8_goto_previous_codepoint(const char* const begin, const char* cursor);
 static const char* utf8_goto_next_codepoint(const char* const cursor, const char* const end);
@@ -94,7 +93,8 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 		}
 
 		int size = snprintf(buf, 64, line_format, line_number);
-		render_line_number(buf, buf + size);
+		
+		render_text_line(buf, buf + size, NULL, 0, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
 		ImGui::SameLine();
 
@@ -121,7 +121,7 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 //     - ImGuiSelectableFlags_NoAutoClosePopups : See ImGui documentation.
 // 
 // Returns local window coordinate of the beginning of the text (top left)
-ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 background_color, int flags)
+ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 foreground_color, ImU32 background_color, int flags)
 {
 	using namespace ImGui;
 
@@ -238,7 +238,10 @@ ImVec2 render_text_line(const char* begin, const char* end, const char* label, I
 	}
 
 	if (is_visible)
-		RenderText(pos, begin, end);
+	{
+		ImU32 color = foreground_color ? foreground_color : GetColorU32(ImGuiCol_Text);
+		window->DrawList->AddText(g.Font, g.FontSize, pos, color, begin, end);
+	}
 
 	// Automatically close popups
 	if (pushed && (window->Flags & ImGuiWindowFlags_Popup) && !(flags & ImGuiSelectableFlags_NoAutoClosePopups) && (g.LastItemData.ItemFlags & ImGuiItemFlags_AutoClosePopups))
@@ -629,7 +632,7 @@ void text_viewer::render_core()
 					snprintf(line_label, 64, "##%d", line_index);
 
 					int text_line_flags = ImGuiSelectableFlags_SpanAvailWidth;
-					ImVec2 local_text_pos = render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, text_line_flags);
+					ImVec2 local_text_pos = render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, 0, text_line_flags);
 
 					line_bb = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
@@ -1217,11 +1220,6 @@ void text_viewer::handle_mouse_inputs()
 			}
 		}
 	}
-}
-
-static void render_line_number(const char* text_begin, const char* text_end)
-{
-	render_text_line(text_begin, text_end, NULL, ImGui::GetColorU32(ImGuiCol_WindowBg));
 }
 
 static int utf8_char_count(const char* str, int n)

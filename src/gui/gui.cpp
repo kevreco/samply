@@ -542,7 +542,11 @@ namespace ui {
             int color = count ? ImGuiCol_PlotHistogram : ImGuiCol_PlotLines;
             float percent = ((float)count / (float)g->report->sample_count) * 100.0f;
 
-            ImGui::TextColored(ImGui::GetStyleColorVec4(color), "%.2f %%", percent);
+            char buf[16];
+            int buf_len = snprintf(buf, 16, "%.2f %%", percent);
+
+            tv::render_text_line(buf, buf + buf_len, NULL, ImGui::GetColorU32(color));
+
             // Display more accurage percentage and the actual sampling count.
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
             {
