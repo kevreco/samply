@@ -74,7 +74,7 @@ static int utf8_char_count(const char* str, int n);
 static const char* utf8_goto_previous_codepoint(const char* const begin, const char* cursor);
 static const char* utf8_goto_next_codepoint(const char* const cursor, const char* const end);
 
-void default_line_prelude_renderer(struct options* options, int line_number, bool line_is_selected)
+void default_line_prelude_renderer(struct options* options, int line_number, int visible_line_max, bool line_is_selected)
 {
 	if (options->display_line_number)
 	{
@@ -83,10 +83,18 @@ void default_line_prelude_renderer(struct options* options, int line_number, boo
 			ImGui::BeginDisabled();
 		}
 
-		char line_num_buf[64];
-		snprintf(line_num_buf, 64, "%05d", line_number);
+		char buf[64];
+		char line_format[16];
+		// Format the line number format
+		{
+			int char_count = snprintf(buf, 64, "%d", visible_line_max);
 
-		render_line_number(line_num_buf, line_num_buf + strlen(line_num_buf));
+			// Create a string like "%99d" which would display a number + leading padding equal to 99
+			snprintf(line_format, 16, "%%" "%d" "d", char_count);
+		}
+
+		int size = snprintf(buf, 64, line_format, line_number);
+		render_line_number(buf, buf + size);
 
 		ImGui::SameLine();
 
@@ -598,7 +606,10 @@ void text_viewer::render_core()
 
 			if (options.display_line_prelude)
 			{
-				options.line_prelude(&options, line_number, line_is_selected);
+				int line_number = line_index_to_line_number(line_index);
+				coord last_coord = screen_pos_to_coord(window->Rect().Max);
+				int last_visible_line_number = line_index_to_line_number(last_coord.line);
+				options.line_prelude(&options, line_number, last_visible_line_number, line_is_selected);
 			}
 
 			{

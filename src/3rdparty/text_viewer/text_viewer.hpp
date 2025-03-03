@@ -111,10 +111,10 @@ namespace tv
 		}
 	};
 
-	typedef void (*line_prelude_renderer)(struct options* options, int line_number, bool line_is_selected);
+	typedef void (*line_prelude_renderer)(struct options* options, int line_number, int visible_line_max, bool line_is_selected);
 
 	ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 background_color, int flags = 0);
-	void default_line_prelude_renderer(struct options* options, int line_number, bool line_is_selected);
+	void default_line_prelude_renderer(struct options* options, int line_number, int visible_line_max, bool line_is_selected);
 
 	struct options {
 		// Allow some operation like text copy.

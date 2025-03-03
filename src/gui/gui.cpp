@@ -513,10 +513,10 @@ namespace ui {
         text_viewer.render();
     }
 
-    static void render_extra_line_information(tv::options* options, int line_number, bool line_is_selected)
+    static void render_extra_line_information(tv::options* options, int line_number, int visible_line_max, bool line_is_selected)
     {
         // Render line number
-        tv::default_line_prelude_renderer(options, line_number, line_is_selected);
+        tv::default_line_prelude_renderer(options, line_number, visible_line_max, line_is_selected);
 
         gui* g = (gui*)options->line_prelude_user_data;
         record_range* range = &g->records_of_current_file;
