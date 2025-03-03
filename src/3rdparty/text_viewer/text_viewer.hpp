@@ -174,10 +174,10 @@ struct text_viewer
 	// However. the 'get_selection_range' always returns a normalize range.
 	coord_range get_selection_range() const;
 
-	void set_selection_start(coord pos);
+	void set_selection_start(coord pos, bool update_anchor_column = false);
 	void set_selection_end(coord pos);
-	void set_selection(coord start, coord end);
-	void set_selection(coord_range range);
+	void set_selection(coord start, coord end, bool update_anchor_column = false);
+
 	void select_all();
 	bool has_selection() const;
 
@@ -227,7 +227,7 @@ private:
 
 	coord sanitize_coord(coord value) const;
 
-	coord get_intermediate_cursor() const;
+	coord get_anchor_cursor() const;
 
 	coord screen_pos_to_coord(const ImVec2& pos) const;
 
@@ -256,6 +256,7 @@ private:
 	ImVector<line> lines;
 
 	coord_range selection;
+	int anchor_column;
 	// Only used to know when the current selection changed.
 	coord previous_cursor_position; 
 

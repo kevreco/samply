@@ -384,8 +384,13 @@ coord_range text_viewer::get_selection_range() const
 	return coord_range(selection.end, selection.start);
 }
 
-void text_viewer::set_selection_start(coord pos)
+void text_viewer::set_selection_start(coord pos, bool update_anchor_column)
 {
+	if (update_anchor_column)
+	{
+		anchor_column = pos.column;
+	}
+
 	selection.start = sanitize_coord(pos);
 }
 
@@ -394,15 +399,10 @@ void text_viewer::set_selection_end(coord pos)
 	selection.end = sanitize_coord(pos);
 }
 
-void text_viewer::set_selection(coord start, coord end)
+void text_viewer::set_selection(coord start, coord end, bool update_anchor_column)
 {
-	set_selection_start(start);
+	set_selection_start(start, update_anchor_column);
 	set_selection_end(end);
-}
-
-void text_viewer::set_selection(coord_range range)
-{
-	set_selection(range.start, range.end);
 }
 
 void text_viewer::select_all()
@@ -493,7 +493,7 @@ coord text_viewer::cursor_translated_x(int delta)
 
 coord text_viewer::cursor_translated_y(int delta)
 {
-	coord position_to_translate = get_intermediate_cursor();
+	coord position_to_translate = get_anchor_cursor();
 
 	position_to_translate.line += delta;
 
@@ -729,10 +729,10 @@ void text_viewer::render_core()
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
 					}
 
-					// Display the intermediate cursor.
-					if (get_intermediate_cursor().line == line_index)
+					// Display the anchor cursor.
+					if (get_anchor_cursor().line == line_index)
 					{
-						float dist = get_intermediate_cursor().column * font_size;
+						float dist = get_anchor_cursor().column * font_size;
 						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
 						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLinesHovered]));
@@ -816,7 +816,7 @@ coord text_viewer::sanitize_coord(coord pos) const
 	return coord(line, column);
 }
 
-coord text_viewer::get_intermediate_cursor() const
+coord text_viewer::get_anchor_cursor() const
 {
 	// Get the line where the mouse cursor is, but get the column wheren the selection started.
 	// This allow use to better position the resulting cursor.
@@ -828,10 +828,7 @@ coord text_viewer::get_intermediate_cursor() const
 	// If my cursor is inside 'human', when moving up the cursor should stick to the comma after "Hello".
 	// If a moving back the cursor I should be where I started inside 'human'
 	//
-	coord intermediate_cursor;
-	intermediate_cursor.line = get_cursor_position().line;
-	intermediate_cursor.column = selection.start.column;
-	return intermediate_cursor;
+	return coord(get_cursor_position().line, anchor_column);
 }
 
 coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
@@ -1082,7 +1079,7 @@ void text_viewer::handle_keyboard_inputs()
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
-				set_selection(new_pos, new_pos);
+				set_selection(new_pos, new_pos, false);
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
 		{
@@ -1106,7 +1103,7 @@ void text_viewer::handle_keyboard_inputs()
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
-				set_selection(new_pos, new_pos);
+				set_selection(new_pos, new_pos, true);
 		}
 		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_RightArrow))
 		{
@@ -1114,7 +1111,7 @@ void text_viewer::handle_keyboard_inputs()
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
-				set_selection(new_pos, new_pos);
+				set_selection(new_pos, new_pos, true);
 		}
 		// @TODO implement Home and End keys.
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_Home))
@@ -1157,7 +1154,7 @@ void text_viewer::handle_mouse_inputs()
 					coord line_start(pos.line, 0);
 					coord line_end(pos.line, get_line_column_length(pos.line));
 
-					set_selection(line_start, line_end);
+					set_selection(line_start, line_end, true);
 				}
 
 				last_click_time = -1.0f;
@@ -1170,7 +1167,7 @@ void text_viewer::handle_mouse_inputs()
 					coord pos = screen_pos_to_coord(ImGui::GetMousePos());
 					coord_range r = get_range_of_same_char_at(pos);
 
-					set_selection(r);
+					set_selection(r.start, r.end, true);
 				}
 
 				last_click_time = (float)ImGui::GetTime();
@@ -1186,7 +1183,7 @@ void text_viewer::handle_mouse_inputs()
 					r = get_range_of_same_char_at(pos);
 				}
 
-				set_selection(r);
+				set_selection(r.start, r.end, true);
 
 				last_click_time = (float)ImGui::GetTime();
 			}
