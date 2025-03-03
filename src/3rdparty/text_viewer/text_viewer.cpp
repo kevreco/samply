@@ -1079,7 +1079,7 @@ void text_viewer::handle_keyboard_inputs()
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
-				set_selection(new_pos, new_pos, false);
+				set_selection(new_pos, new_pos);
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_PageUp))
 		{
@@ -1113,14 +1113,23 @@ void text_viewer::handle_keyboard_inputs()
 			else
 				set_selection(new_pos, new_pos, true);
 		}
-		// @TODO implement Home and End keys.
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_Home))
 		{
-			assert(0 && "@TODO");
+			coord current = get_cursor_position();
+			coord new_pos(current.line, 0);
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos, true);
 		}
 		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_End))
 		{
-			assert(0 && "@TODO");
+			coord current = get_cursor_position();
+			coord new_pos(current.line, lines[current.line].get_utf8_char_count());
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos, true);
 		}
 	}
 }
