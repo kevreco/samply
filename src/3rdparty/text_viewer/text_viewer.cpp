@@ -477,7 +477,7 @@ coord text_viewer::cursor_translated_x(int delta)
 		pos.column += lines[pos.line].get_utf8_char_count();
 	}
 	
-	while (pos.line < lines.size() && pos.column > lines[pos.line].get_utf8_char_count())
+	while (pos.line + 1 < lines.size() && pos.column > lines[pos.line].get_utf8_char_count())
 	{
 		// Remove char count to the column number
 		pos.column -= lines[pos.line].get_utf8_char_count();
