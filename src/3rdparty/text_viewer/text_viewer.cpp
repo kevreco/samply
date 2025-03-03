@@ -647,16 +647,13 @@ void text_viewer::render_core()
 						ImGui::SetScrollHereY(0.1f);
 					}
 
-					ImRect last_item_rect(ImVec2(0, ImGui::GetItemRectMin().y), ImGui::GetItemRectMax());
-
-					if (options.debug_mode && get_cursor_position().line == line_index)
+					// Scroll to cursor if it changed.
+					if (cursor_changed && scroll_at == line_index)
 					{
-						draw_list->AddRect(last_item_rect.Min, last_item_rect.Max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLines]));
-					}
-					// Scroll to cursor it it changed.
-					if (cursor_changed && scroll_at == line_index && !ImGui::IsItemVisible())
-					{
-						ImGui::ScrollToRect(ImGui::GetCurrentWindow(), last_item_rect);
+						float dist = text_distance_from_line_start(get_cursor_position());
+						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
+						ImVec2 max(line_bb.Min.x + dist + 2.f, line_bb.Max.y);
+						ImGui::ScrollToRect(ImGui::GetCurrentWindow(), ImRect(min, max));
 					}
 				}
 
@@ -707,6 +704,9 @@ void text_viewer::render_core()
 			draw_list->AddRect(selected_line_bb.Min, selected_line_bb.Max, ImGui::GetColorU32(style.Colors[ImGuiCol_NavCursor]));
 		}
 	}
+
+	// Add this dummy to fix a scroll issue where last spacing is not taken into account by the scroll bar.
+	ImGui::Dummy(style.ItemSpacing);
 }
 
 float text_viewer::text_distance_from_line_start(coord pos) const
