@@ -95,7 +95,6 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 		int size = snprintf(buf, 64, line_format, line_number);
 		
 		render_text_line(buf, buf + size, NULL, 0, ImGui::GetColorU32(ImGuiCol_WindowBg));
-
 		ImGui::SameLine();
 
 		if (!line_is_selected)
@@ -121,13 +120,15 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 //     - ImGuiSelectableFlags_NoAutoClosePopups : See ImGui documentation.
 // 
 // Returns local window coordinate of the beginning of the text (top left)
-ImVec2 render_text_line(const char* begin, const char* end, const char* label, ImU32 foreground_color, ImU32 background_color, int flags)
+void render_text_line(const char* begin, const char* end, const char* label, ImU32 foreground_color, ImU32 background_color, int flags)
 {
 	using namespace ImGui;
 
 	ImGuiWindow* window = GetCurrentWindow();
 	if (window->SkipItems)
-		return ImVec2(-1.0f, -1.0f);
+	{
+		return;
+	}
 
 	ImGuiContext& g = *GImGui;
 	const ImGuiStyle& style = g.Style;
@@ -183,7 +184,9 @@ ImVec2 render_text_line(const char* begin, const char* end, const char* label, I
 	}
 
 	if (!is_visible)
-		return ImVec2(-1.0f, -1.0f);
+	{
+		return;
+	}
 
 	const bool disabled_global = (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
 	if (disabled_item && !disabled_global) // Only testing this as an optimization
@@ -249,8 +252,6 @@ ImVec2 render_text_line(const char* begin, const char* end, const char* label, I
 
 	if (disabled_item && !disabled_global)
 		EndDisabled();
-
-	return pos - window->Pos + window->Scroll;
 }
 
 int text_viewer::line::get_utf8_char_count() const
@@ -632,7 +633,7 @@ void text_viewer::render_core()
 					snprintf(line_label, 64, "##%d", line_index);
 
 					int text_line_flags = ImGuiSelectableFlags_SpanAvailWidth;
-					ImVec2 local_text_pos = render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, 0, text_line_flags);
+					render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, 0, text_line_flags);
 
 					line_bb = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
@@ -640,9 +641,9 @@ void text_viewer::render_core()
 					{
 						is_first_iteration = false;
 
-						// Update text_margin according to the size of everything before that.
-						// This is currently the line number display but there might be other custom items.
-						text_margin = local_text_pos.x;
+						// Update the text according to the size of everything before that.
+						// The line number is displayed by default but there might be user items.
+						text_margin_x = line_bb.Min.x;
 
 						graphical_char_size.y = line_bb.GetHeight();
 					}
@@ -855,6 +856,8 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 
 	// Local pos relative to the parent window or child window.
 	ImVec2 local_pos(screen_pos - window_pos + window_scroll);
+	// Local margin
+	float local_margin(text_margin_x - window_pos.x + window_scroll.x);
 
 	int line_index = (int)floor((local_pos.y - window_padding.y) / graphical_char_size.y);
 
@@ -873,7 +876,7 @@ coord text_viewer::screen_pos_to_coord(const ImVec2& screen_pos) const
 	{
 		auto& line = lines[line_index];
 
-		column_index = text_distance_to_column_index(line.text, local_pos.x - text_margin);
+		column_index = text_distance_to_column_index(line.text, local_pos.x - local_margin);
 	}
 
 	return coord(line_index, column_index);

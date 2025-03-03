@@ -113,7 +113,7 @@ namespace tv
 
 	typedef void (*line_prelude_renderer)(struct options* options, int line_number, int visible_line_max, bool line_is_selected);
 
-	ImVec2 render_text_line(const char* begin, const char* end, const char* label = NULL, ImU32 foreground_color = 0, ImU32 background_color = 0, int flags = 0);
+	void render_text_line(const char* begin, const char* end, const char* label = NULL, ImU32 foreground_color = 0, ImU32 background_color = 0, int flags = 0);
 	void default_line_prelude_renderer(struct options* options, int line_number, int visible_line_max, bool line_is_selected);
 
 	struct options {
@@ -262,9 +262,8 @@ private:
 
 	bool text_changed;
 
-	// Position (in pixels) where a code line starts relative
-	// to the left of window containingthe text viewer.
-	float text_margin = 0.0f;
+	// Screen position of the start of the text.
+	float text_margin_x = 0.0f;
 
 	ImVec2 window_pos;
 	ImVec2 window_scroll;

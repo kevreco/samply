@@ -546,13 +546,13 @@ namespace ui {
             int buf_len = snprintf(buf, 16, "%.2f %%", percent);
 
             tv::render_text_line(buf, buf + buf_len, NULL, ImGui::GetColorU32(color));
-
+            ImGui::SameLine();
             // Display more accurage percentage and the actual sampling count.
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
             {
                 ImGui::SetTooltip("%.4f - %zu", percent, count);
             }
-            ImGui::SameLine();
+            
         }
     }
 
@@ -695,5 +695,5 @@ void gui::jump_to_file(strv filepath, size_t line)
     // Highlight specific line.
     tv::coord pos = text_viewer.get_cursor_position();
     pos.line = text_viewer.line_number_to_line_index(line);
-    text_viewer.set_cursor_position(pos);
+    text_viewer.set_selection(pos, pos);
 }
