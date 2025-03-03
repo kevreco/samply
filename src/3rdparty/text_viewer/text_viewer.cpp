@@ -77,11 +77,6 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 {
 	if (options->display_line_number)
 	{
-		if (!line_is_selected)
-		{
-			ImGui::BeginDisabled();
-		}
-
 		char buf[64];
 		char line_format[16];
 		// Format the line number format
@@ -89,18 +84,17 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 			int char_count = snprintf(buf, 64, "%d", visible_line_max);
 
 			// Create a string like "%99d" which would display a number + leading padding equal to 99
-			snprintf(line_format, 16, "%%" "%d" "d", char_count);
+			// Add 2 leading space padding by default and add a trailing space
+			static const int leading_padding = 2;
+			const char* trailing_space = " ";
+			snprintf(line_format, 16, "%%" "%d" "d" "%s", char_count + leading_padding, trailing_space);
 		}
 
 		int size = snprintf(buf, 64, line_format, line_number);
 		
-		render_text_line(buf, buf + size, NULL, 0, ImGui::GetColorU32(ImGuiCol_WindowBg));
+		int background_color = line_is_selected ? ImGuiCol_ScrollbarGrab : ImGuiCol_WindowBg ;
+		render_text_line(buf, buf + size, NULL, 0, ImGui::GetColorU32(background_color));
 		ImGui::SameLine();
-
-		if (!line_is_selected)
-		{
-			ImGui::EndDisabled();
-		}
 	}
 }
 
@@ -147,18 +141,9 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 
 	ItemSize(size, 0.0f);
 
-	// Fill horizontal space
-	// We don't support (size < 0.0f) in Selectable() because the ItemSpacing extension would make explicitly right-aligned sizes not visibly match other widgets.
-	const bool span_all_columns = (flags & ImGuiSelectableFlags_SpanAllColumns) != 0;
-	const float min_x = span_all_columns ? window->ParentWorkRect.Min.x : pos.x;
-	const float max_x = span_all_columns ? window->ParentWorkRect.Max.x : window->WorkRect.Max.x;
-	if ((flags & ImGuiSelectableFlags_SpanAvailWidth))
-		size.x = tv::max(text_size.x, max_x - min_x);
-
-	// Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
-	// FIXME: Not part of layout so not included in clipper calculation, but ItemSize currently doesn't allow offsetting CursorPos.
-	ImRect bb(min_x, pos.y, min_x + size.x, pos.y + size.y);
-	//if ((flags & ImGuiSelectableFlags_NoPadWithHalfSpacing) == 0)
+	ImRect bb(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
+	
+	// We add the item spacing and center the text horizontally.
 	{
 		bb.Max.y += style.ItemSpacing.y;
 		pos.y += style.ItemSpacing.y * 0.5f;
@@ -166,22 +151,8 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 
 	const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
 	const ImGuiItemFlags extra_item_flags = disabled_item ? (ImGuiItemFlags)ImGuiItemFlags_Disabled : ImGuiItemFlags_None;
-	bool is_visible;
-	if (span_all_columns)
-	{
-		// Modify ClipRect for the ItemAdd(), faster than doing a PushColumnsBackground/PushTableBackgroundChannel for every Selectable..
-		const float backup_clip_rect_min_x = window->ClipRect.Min.x;
-		const float backup_clip_rect_max_x = window->ClipRect.Max.x;
-		window->ClipRect.Min.x = window->ParentWorkRect.Min.x;
-		window->ClipRect.Max.x = window->ParentWorkRect.Max.x;
-		is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
-		window->ClipRect.Min.x = backup_clip_rect_min_x;
-		window->ClipRect.Max.x = backup_clip_rect_max_x;
-	}
-	else
-	{
-		is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
-	}
+	
+	bool is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
 
 	if (!is_visible)
 	{
@@ -191,18 +162,6 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 	const bool disabled_global = (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
 	if (disabled_item && !disabled_global) // Only testing this as an optimization
 		BeginDisabled();
-
-	// FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
-	// which would be advantageous since most selectable are not selected.
-	if (span_all_columns)
-	{
-		if (g.CurrentTable)
-			TablePushBackgroundChannel();
-		else if (window->DC.CurrentColumns)
-			PushColumnsBackground();
-		g.LastItemData.StatusFlags |= ImGuiItemStatusFlags_HasClipRect;
-		g.LastItemData.ClipRect = window->ClipRect;
-	}
 
 	bool hovered = false;
 	bool pushed = false;
@@ -230,14 +189,6 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 			ImU32 col = GetColorU32(pushed ? ImGuiCol_HeaderActive : (hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header));
 			RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
 		}
-	}
-
-	if (span_all_columns)
-	{
-		if (g.CurrentTable)
-			TablePopBackgroundChannel();
-		else if (window->DC.CurrentColumns)
-			PopColumnsBackground();
 	}
 
 	if (is_visible)
@@ -569,9 +520,6 @@ void text_viewer::render_core()
 
 	auto draw_list = ImGui::GetWindowDrawList();
 
-	// Selected line bounding box
-	ImRect selected_line_bb;
-
 	ImGuiListClipper clipper;
 
 	clipper.Begin(lines.size());
@@ -647,13 +595,6 @@ void text_viewer::render_core()
 
 						graphical_char_size.y = line_bb.GetHeight();
 					}
-				}
-
-				if (line_is_selected)
-				{
-					selected_line_bb = line_bb;
-					// Allow 1 pixel wider on bottom side to make it overlap the top line of the line below.
-					selected_line_bb.Max.y += 1.0f;
 				}
 
 				if (options.display_text_selection)
@@ -755,11 +696,6 @@ void text_viewer::render_core()
 					}
 				}
 			}
-		}
-
-		if (options.display_line_selection)
-		{
-			draw_list->AddRect(selected_line_bb.Min, selected_line_bb.Max, ImGui::GetColorU32(style.Colors[ImGuiCol_NavCursor]));
 		}
 	}
 

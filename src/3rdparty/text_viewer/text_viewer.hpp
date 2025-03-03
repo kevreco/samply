@@ -129,9 +129,6 @@ namespace tv
 		// Highlight selected text.
 		bool display_text_selection = true;
 
-		// Display rectangle over the selected line.
-		bool display_line_selection = true;
-
 		bool display_line_number = true;
 
 		bool display_cursor = true;
