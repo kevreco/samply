@@ -462,6 +462,35 @@ void text_viewer::scroll_to_line_index(int line_index)
 		: line_index;
 }
 
+coord text_viewer::cursor_translated_x(int delta)
+{
+	coord pos = get_cursor_position();
+	pos.column += delta;
+	
+	// While there is a negative column number move one line up and adjust column coordinate.
+	while (pos.column < 0 && pos.line > 0)
+	{
+		// Move line up.
+		pos.line -= 1;
+		// Column is now equal to the last position character of the line +1
+		// because the cursor can be right after the last char of the line.
+		pos.column += lines[pos.line].get_utf8_char_count();
+	}
+	
+	while (pos.line < lines.size() && pos.column > lines[pos.line].get_utf8_char_count())
+	{
+		// Remove char count to the column number
+		pos.column -= lines[pos.line].get_utf8_char_count();
+		// Since the column can be within [0 ; line.char_count] (inclusive range).
+		// We need to substract the line.char_count and one extra character to make it 0-based.
+		pos.column -= 1;
+		// Move line down.
+		pos.line += 1;
+	}
+
+	return sanitize_coord(pos);
+}
+
 coord text_viewer::cursor_translated_y(int delta)
 {
 	coord position_to_translate = get_intermediate_cursor();
@@ -1041,7 +1070,7 @@ void text_viewer::handle_keyboard_inputs()
 			select_all();
 		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_UpArrow))
 		{
-			coord new_pos = cursor_translated_y(-1);
+			coord new_pos = cursor_translated_y( -1 );
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
@@ -1049,7 +1078,7 @@ void text_viewer::handle_keyboard_inputs()
 		}
 		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_DownArrow))
 		{
-			coord new_pos = cursor_translated_y(+1);
+			coord new_pos = cursor_translated_y( +1 );
 			if (shift)
 				set_selection(selection.start, new_pos);
 			else
@@ -1070,6 +1099,31 @@ void text_viewer::handle_keyboard_inputs()
 				set_selection(selection.start, new_pos);
 			else
 				set_selection(new_pos, new_pos);
+		}
+		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+		{
+			coord new_pos = cursor_translated_x( -1 );
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
+		}
+		else if (!ctrl && !alt && ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+		{
+			coord new_pos = cursor_translated_x( +1 );
+			if (shift)
+				set_selection(selection.start, new_pos);
+			else
+				set_selection(new_pos, new_pos);
+		}
+		// @TODO implement Home and End keys.
+		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_Home))
+		{
+			assert(0 && "@TODO");
+		}
+		else if (!alt && ImGui::IsKeyPressed(ImGuiKey_End))
+		{
+			assert(0 && "@TODO");
 		}
 	}
 }

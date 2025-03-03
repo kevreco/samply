@@ -192,6 +192,8 @@ struct text_viewer
 	// Next time the viewer is rendered, scroll to the 0-based index.
 	void scroll_to_line_index(int line_index);
 
+	coord cursor_translated_x(int delta);
+
 	// Get coordinate as if the cursor position is moving up or down by 'delta' number of line.
 	// 'delta' can be positive or negative.
 	coord cursor_translated_y(int delta);
