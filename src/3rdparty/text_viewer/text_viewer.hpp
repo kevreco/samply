@@ -134,6 +134,8 @@ namespace tv
 
 		bool display_line_number = true;
 
+		bool display_cursor = true;
+
 		// Display various information useful to debug the selection.
 		bool debug_mode = false;
 

@@ -57,12 +57,13 @@ int main() {
         {
             if (ImGui::CollapsingHeader("Features List"))
             {
+                ImGui::BulletText("Cursor position (can be disabled).");
                 ImGui::BulletText("Current line selection (can be disabled).");
                 ImGui::BulletText("Current text selection (can be disabled).");
                 ImGui::BulletText("Line number (can be disabled).");
                 ImGui::BulletText("Custom widgets can be displayed before the line.");
                 ImGui::BulletText("Copy selection via Ctrl + C and Ctrl + X");
-                ImGui::BulletText("Move cursor with Ctrl + Up and Ctrl + Down");
+                ImGui::BulletText("Move cursor with Ctrl + Up, Ctrl + Down, Ctrl + PageUp, Ctrl + PageDown");
                 ImGui::BulletText("Ctrl + A to select all the text");
                 ImGui::BulletText("Keyboards and mouse inputs can be disabled.");
             }
@@ -76,15 +77,16 @@ int main() {
                 ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Allow Mouse Inputs", &viewer.options.allow_mouse_inputs);
                 
-
+                ImGui::Checkbox("Display Cursor", &viewer.options.display_cursor);
+                ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Display Text Selection", &viewer.options.display_text_selection);
-                ImGui::SameLine(indent_offset);
+                
                 ImGui::Checkbox("Display Line Selection", &viewer.options.display_line_selection);
-               
-                ImGui::Checkbox("Display Line Prelude", &viewer.options.display_line_prelude);
                 ImGui::SameLine(indent_offset);
+                ImGui::Checkbox("Display Line Prelude", &viewer.options.display_line_prelude);
+                
                 ImGui::Checkbox("Display Line Number", &viewer.options.display_line_number);
-
+                ImGui::SameLine(indent_offset);
                 ImGui::Checkbox("Debug Mode", &viewer.options.debug_mode);
             }
 
@@ -153,10 +155,10 @@ int main() {
                     ImGui::SeparatorText("Selected Text:");
 
                     tv::coord_range range = viewer.get_selection_range();
-                    int draw_lines = range.end.line - range.start.line;
-                    if (draw_lines > 0)
+                    int line_count = range.end.line - range.start.line;
+                    if (line_count > 0)
                     {
-                        ImGui::Text("Line count selection: %d", draw_lines);
+                        ImGui::Text("Line count selection: %d", line_count);
 
                         if (ImGui::BeginChild("Selected Text", ImVec2(-FLT_MIN, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle | ImGuiChildFlags_AutoResizeY))
                             ImGui::Text("%s", viewer.get_selected_text().c_str());

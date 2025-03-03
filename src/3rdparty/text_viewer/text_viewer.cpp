@@ -667,6 +667,19 @@ void text_viewer::render_core()
 					}
 				}
 
+				// Display input cursor
+				if (options.display_cursor && line_is_selected)
+				{
+					// Render two straight lines to avoid anti aliasing of rectangles.
+					float dist = floor(text_distance_from_line_start(get_cursor_position()));
+					ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
+					ImVec2 max(line_bb.Min.x + dist, line_bb.Max.y);
+					draw_list->AddLine(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
+					min.x += 1.f;
+					max.x += 1.f;
+					draw_list->AddLine(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
+				}
+
 				if (options.debug_mode)
 				{
 					// Display selection start
