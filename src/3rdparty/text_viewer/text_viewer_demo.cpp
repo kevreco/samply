@@ -62,9 +62,10 @@ int main() {
                 ImGui::BulletText("Current text selection (can be disabled).");
                 ImGui::BulletText("Line number (can be disabled).");
                 ImGui::BulletText("Custom widgets can be displayed before the line.");
-                ImGui::BulletText("Copy selection via Ctrl + C and Ctrl + X");
-                ImGui::BulletText("Move cursor with Ctrl + Up, Ctrl + Down, Ctrl + PageUp, Ctrl + PageDown");
-                ImGui::BulletText("Ctrl + A to select all the text");
+                ImGui::BulletText("Copy selection via CTRL+C and CTRL+X");
+                ImGui::BulletText("Move cursor with UP, DOWN, PAGE_UP, PAGE_DOWN, HOME, END.");
+                ImGui::BulletText("Move selection holding CTRL.");
+                ImGui::BulletText("CTRL+A to select all the text.");
                 ImGui::BulletText("Keyboards and mouse inputs can be disabled.");
             }
 
@@ -109,18 +110,21 @@ int main() {
             }
 
             {
-
                 ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysHorizontalScrollbar;
                 // Add No nav to avoid some undesiredeffect when moving up and down with the keyboard.
                 // The windows will try to scroll once and immediatly reposition itself
                 // due to the changing selection on the text viewer side.
                 window_flags |= ImGuiWindowFlags_NoNav;
 
-                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle , window_flags);
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+
+                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders  | ImGuiChildFlags_FrameStyle, window_flags);
 
                 viewer.render();
 
                 ImGui::EndChild();
+
+                ImGui::PopStyleVar(1);
             }
 
             ImGui::SameLine();
