@@ -796,27 +796,26 @@ float text_viewer::text_distance_from_line_start(coord pos) const
 
 int text_viewer::text_distance_to_column_index(string_view view, float distance) const
 {
-	const char* begin = view.data;
+	const char* cursor = view.data;
 	const char* end = view.data + view.size;
-	float result = 0;
-	bool found = false;
+
 	ImGuiContext* ctx = ImGui::GetCurrentContext();
 
-	int charCount = 0;
-	float currentX = 0.0f;
-	while (begin < end && !found)
+	int char_count = 0;
+	float current_x = 0.0f;
+	while (cursor < end)
 	{
 		unsigned int c;
-		begin += ImTextCharFromUtf8(&c, begin, end);
+		cursor += ImTextCharFromUtf8(&c, cursor, end);
 
 		float advance = ctx->Font->GetCharAdvance((ImWchar)c) * ctx->FontScale;
 
-		if (currentX + (advance * 0.5f) > distance)
-			return charCount;
-		currentX += advance;
-		charCount += 1;
+		if (current_x + (advance * 0.5f) > distance)
+			return char_count;
+		current_x += advance;
+		char_count += 1;
 	}
-	return charCount;
+	return char_count;
 };
 
 coord text_viewer::sanitize_coord(coord pos) const
