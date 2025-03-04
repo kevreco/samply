@@ -108,8 +108,6 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 //     - ImGuiSelectableFlags_Highlight :
 //         This behavior changed compared to the original ImGui::Selectable,
 //         Allow frame highligthing depending on wether the item is hovered, or "pushed" (mouse hover + mouse pressed).
-//     - ImGuiSelectableFlags_SpanAllColumns : See ImGui documentation.
-//     - ImGuiSelectableFlags_SpanAvailWidth : See ImGui documentation
 //     - ImGuiSelectableFlags_Disabled : See ImGui documentation.
 //     - ImGuiSelectableFlags_NoAutoClosePopups : See ImGui documentation.
 // 
