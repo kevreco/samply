@@ -106,7 +106,8 @@ int main() {
                     viewer.request_scroll_to_line_number(line_index_to_scroll_to);
                 }
             }
-
+            float scroll_y = 0;
+            float scroll_max_y = 0;
             {
                 ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysHorizontalScrollbar;
                 // Add No nav to avoid some undesiredeffect when moving up and down with the keyboard.
@@ -116,9 +117,12 @@ int main() {
 
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -FLT_MIN), ImGuiChildFlags_Borders  | ImGuiChildFlags_FrameStyle, window_flags);
+                ImGui::BeginChild("LeftChild", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, -ImGui::GetTextLineHeightWithSpacing()), ImGuiChildFlags_Borders  | ImGuiChildFlags_FrameStyle, window_flags);
 
                 viewer.render();
+
+                scroll_y = ImGui::GetScrollY();
+                scroll_max_y = ImGui::GetScrollMaxY();
 
                 ImGui::EndChild();
 
@@ -130,7 +134,7 @@ int main() {
             {
                 ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
 
-                ImGui::BeginChild("RightChild", ImVec2(0, -FLT_MIN), ImGuiChildFlags_Borders, window_flags);
+                ImGui::BeginChild("RightChild", ImVec2(0, -ImGui::GetTextLineHeightWithSpacing()), ImGuiChildFlags_Borders, window_flags);
                 if (print_selection_coord)
                 {
                     auto range = viewer.get_selection_range();
@@ -178,6 +182,8 @@ int main() {
                 }
                 ImGui::EndChild();
             }
+
+            ImGui::Text("Scrolling: %.0f/%.0f", scroll_y, scroll_max_y);
         }
 
         ImGui::End();
