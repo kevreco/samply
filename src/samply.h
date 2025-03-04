@@ -4,8 +4,8 @@
 #define SMP_APP_NAME "Samply"
 
 /* Version of the application. */
-#define SMP_APP_VERSION_NUMBER (1)
-#define SMP_APP_VERSION_TEXT "0.0.1-dev"
+#define SMP_APP_VERSION_NUMBER (2)
+#define SMP_APP_VERSION_TEXT "0.0.2-dev"
 
 /* Version of the binary file format of the summary. */
 #define SMP_SUMMARY_VERSION_NUMBER (1)
