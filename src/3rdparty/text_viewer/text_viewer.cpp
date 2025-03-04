@@ -138,18 +138,20 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 	ImVec2 pos = window->DC.CursorPos;
 
 	ImRect bb(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
-	
+
+	ItemSize(bb.GetSize(), 0.0f);
+#if 0
+	RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiSelectableFlags_Disabled));
+#endif
 	// Add the item spacing and center the text horizontally.
 	{
 		bb.Max.y += style.ItemSpacing.y;
+
 		pos.y += style.ItemSpacing.y * 0.5f;
 	}
-
-	// Set spacing to zero temporarily to avoid extra spacing for the last item.
-	auto saved = g.Style.ItemSpacing.y;
-	g.Style.ItemSpacing.y = 0;
-	ItemSize(bb.GetSize(), 0.0f);
-	g.Style.ItemSpacing.y = saved;
+#if 0
+	RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_Header));
+#endif
 
 	const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
 	const ImGuiItemFlags extra_item_flags = disabled_item ? (ImGuiItemFlags)ImGuiItemFlags_Disabled : ImGuiItemFlags_None;
@@ -693,6 +695,10 @@ void text_viewer::render_core()
 			}
 		}
 	}
+
+	// This height-less dummy is actually necessary to add one last spacing between the last item and the windows.
+	// If this space is not there the scroll bar will sometimes be stopped before the end of line.
+	ImGui::Dummy(ImVec2(1.0f, 0));
 
 	// Increase frame stamp. It does not matter if it loops forever.
 	frame_stamp += 1;
