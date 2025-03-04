@@ -265,7 +265,7 @@ namespace ui {
             float expand_y = -FLT_MIN;
             // We want to keep a margin to display the information line the selected line, position, selection etc.
             float expand_x_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
-            ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle);
+            ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoNav);
 
             show_source_file();
 
