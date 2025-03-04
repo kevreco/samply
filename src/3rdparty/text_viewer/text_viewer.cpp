@@ -139,15 +139,19 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 	ImVec2 size(size_arg.x != 0.0f ? size_arg.x : text_size.x, size_arg.y != 0.0f ? size_arg.y : text_size.y);
 	ImVec2 pos = window->DC.CursorPos;
 
-	ItemSize(size, 0.0f);
-
 	ImRect bb(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
 	
-	// We add the item spacing and center the text horizontally.
+	// Add the item spacing and center the text horizontally.
 	{
 		bb.Max.y += style.ItemSpacing.y;
 		pos.y += style.ItemSpacing.y * 0.5f;
 	}
+
+	// Set spacing to zero temporarily to avoid extra spacing for the last item.
+	auto saved = g.Style.ItemSpacing.y;
+	g.Style.ItemSpacing.y = 0;
+	ItemSize(bb.GetSize(), 0.0f);
+	g.Style.ItemSpacing.y = saved;
 
 	const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
 	const ImGuiItemFlags extra_item_flags = disabled_item ? (ImGuiItemFlags)ImGuiItemFlags_Disabled : ImGuiItemFlags_None;
