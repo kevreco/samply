@@ -413,18 +413,15 @@ int text_viewer::line_index_to_line_number(int line_index) const
 	return line_index + 1;
 }
 
-void text_viewer::scroll_to_line_number(int line_number)
+void text_viewer::request_scroll_to_line_number(int line_number)
 {
-	line_to_scroll_to = line_number < 1
-		? 1
-		: line_number_to_line_index(line_number);
+	int line_index = line_number_to_line_index(line_number);
+	return request_scroll_to_line_index(line_index);
 }
 
-void text_viewer::scroll_to_line_index(int line_index)
+void text_viewer::request_scroll_to_line_index(int line_index)
 {
-	line_to_scroll_to = line_index < 0
-		? 0
-		: line_index;
+	scroll_request.set(line_index, frame_stamp);
 }
 
 coord text_viewer::cursor_translated_x(int delta)
@@ -504,11 +501,11 @@ void text_viewer::render_core()
 {
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
 
-	auto& style = ImGui::GetStyle();
+	ImGuiStyle& style = ImGui::GetStyle();
 
 	// Compute graphical_char_size regarding to scaled font size (Ctrl + mouse wheel)
-	const float font_size = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
-	graphical_char_size.x = font_size;
+	const float font_size_x = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
+	graphical_char_size.x = font_size_x;
 
 	// Flag cursor change
 	bool cursor_changed = false;
@@ -522,29 +519,43 @@ void text_viewer::render_core()
 
 	auto draw_list = ImGui::GetWindowDrawList();
 
+	bool should_go_to_line = scroll_request.should_go_to_line(frame_stamp);
+	if (should_go_to_line)
+	{
+		coord pos(scroll_request.line, 0);
+		set_selection(pos, pos);
+	}
+
+	// Handle scrolling
+	if (cursor_changed || should_go_to_line)
+	{
+		float cursor_min_y = get_cursor_position().line * graphical_char_size.y;
+		float cursor_max_y = cursor_min_y + graphical_char_size.y;
+		float scroll_y = ImGui::GetScrollY();
+		float visible_size = ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y;
+		float scroll_to_end_of_area = scroll_y + visible_size;
+
+		if (should_go_to_line)
+		{
+			// Set scroll view 2 line above the cursor.
+			float pos = cursor_min_y - (graphical_char_size.y * 2);
+			ImGui::SetScrollY(pos);
+			scroll_request.clear();
+		}
+		else if (cursor_min_y < scroll_y) {
+
+			ImGui::SetScrollY(cursor_min_y);
+		}
+		else if (cursor_max_y > scroll_to_end_of_area) {
+
+			float scroll_pos = cursor_max_y - visible_size;
+			ImGui::SetScrollY(scroll_pos);
+		}
+	}
+
 	ImGuiListClipper clipper;
 
 	clipper.Begin(lines.size());
-
-	int scroll_at = 0;
-	if (cursor_changed)
-	{
-		scroll_at = get_cursor_position().line;
-		clipper.IncludeItemByIndex(scroll_at);
-	}
-
-	bool scroll_requested = line_to_scroll_to >= 0;
-
-	// Scroll if requested.
-	// This override the "IncludeItemByIndex" from the cursor change above.
-	if (scroll_requested)
-	{
-		scroll_at = line_to_scroll_to;
-		line_to_scroll_to = -1;
-
-		// Force display of specified line.
-		clipper.IncludeItemByIndex(scroll_at);
-	}
 
 	bool is_first_iteration = true;
 	while (clipper.Step())
@@ -626,24 +637,6 @@ void text_viewer::render_core()
 					}
 				}
 
-				// Scroll if needed
-				{
-					if (scroll_requested && scroll_at == line_index)
-					{
-						// Scroll right at the previous item.
-						ImGui::SetScrollHereY(0.1f);
-					}
-
-					// Scroll to cursor if it changed.
-					if (cursor_changed && scroll_at == line_index)
-					{
-						float dist = text_distance_from_line_start(get_cursor_position());
-						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
-						ImVec2 max(line_bb.Min.x + dist + 2.f, line_bb.Max.y);
-						ImGui::ScrollToRect(ImGui::GetCurrentWindow(), ImRect(min, max));
-					}
-				}
-
 				if (options.display_text_selection)
 				{
 					if (selection_start != -1 && selection_end != -1 && selection_start < selection_end)
@@ -673,7 +666,7 @@ void text_viewer::render_core()
 					// Display selection start
 					if (selection.start.line == line_index)
 					{
-						float dist = selection.start.column * font_size;
+						float dist = selection.start.column * font_size_x;
 						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
 						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLines]));
@@ -682,7 +675,7 @@ void text_viewer::render_core()
 					// Display selection end
 					if (selection.end.line == line_index)
 					{
-						float dist = selection.end.column * font_size;
+						float dist = selection.end.column * font_size_x;
 						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
 						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotHistogram]));
@@ -691,7 +684,7 @@ void text_viewer::render_core()
 					// Display the anchor cursor.
 					if (get_anchor_cursor().line == line_index)
 					{
-						float dist = get_anchor_cursor().column * font_size;
+						float dist = get_anchor_cursor().column * font_size_x;
 						ImVec2 min(line_bb.Min.x + dist, line_bb.Min.y);
 						ImVec2 max(line_bb.Min.x + dist + 3.f, line_bb.Max.y);
 						draw_list->AddRect(min, max, ImGui::GetColorU32(style.Colors[ImGuiCol_PlotLinesHovered]));
@@ -700,6 +693,9 @@ void text_viewer::render_core()
 			}
 		}
 	}
+
+	// Increase frame stamp. It does not matter if it loops forever.
+	frame_stamp += 1;
 }
 
 float text_viewer::text_distance_from_line_start(coord pos) const

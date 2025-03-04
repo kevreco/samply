@@ -101,9 +101,9 @@ int main() {
 
                 ImGui::SetNextItemWidth(80.0f);
                
-                if (ImGui::DragInt("Scroll to line", &line_index_to_scroll_to, 0.2f, 0, viewer.get_text_line_count()))
+                if (ImGui::DragInt("Goto to line", &line_index_to_scroll_to, 0.2f, 0, viewer.get_text_line_count()))
                 {
-                    viewer.scroll_to_line_index(line_index_to_scroll_to);
+                    viewer.request_scroll_to_line_number(line_index_to_scroll_to);
                 }
             }
 

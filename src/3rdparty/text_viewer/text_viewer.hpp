@@ -185,9 +185,9 @@ struct text_viewer
 	int line_index_to_line_number(int line_index) const;
 
 	// Next time the viewer is rendered, scroll to line number displayed in the viewer.
-	void scroll_to_line_number(int line_number);
+	void request_scroll_to_line_number(int line_number);
 	// Next time the viewer is rendered, scroll to the 0-based index.
-	void scroll_to_line_index(int line_index);
+	void request_scroll_to_line_index(int line_index);
 
 	coord cursor_translated_x(int delta);
 
@@ -269,7 +269,19 @@ private:
 
 	float last_click_time;
 
-	int line_to_scroll_to = -1;
+	// Certain operation can only be done after the first text rendering.
+	// Instead of keeping tack of text changes we use a "frame stamp"
+	// and execute the request on the following frame;
+	unsigned int frame_stamp = 0;
+
+	struct scroll_request {
+		int line = -1;
+		int frame_stamp = 0;
+
+		void set(int line_index, unsigned int frame) { line = line_index; frame_stamp = frame; }
+		void clear() { line = -1; }
+		bool should_go_to_line(unsigned int frame) const { return line >= 0 && frame_stamp != frame; }
+	} scroll_request;
 
 public:
 
