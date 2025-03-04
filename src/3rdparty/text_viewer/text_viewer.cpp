@@ -261,7 +261,7 @@ void text_viewer::render()
 void text_viewer::set_text(string_view text)
 {
 	current_text = text;
-
+	lines.clear();
 	text_changed = true;
 }
 
