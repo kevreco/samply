@@ -64,3 +64,4 @@ The codebase is MIT and is using those components:
 - `text_viewier.hpp` has been created from [ImGuiColorTextEdit](https://github.com/BalazsJako/ImGuiColorTextEdit) (MIT license)
 - [Lucide Icons](https://github.com/lucide-icons) (ISC license)
 - [IconFontCppHeaders](https://github.com/juliettef/IconFontCppHeaders) (zlib License)
+- `Roboto` font (Apache License, Version 2.0)

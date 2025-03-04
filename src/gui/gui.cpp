@@ -548,14 +548,13 @@ namespace ui {
             char buf[16];
             int buf_len = snprintf(buf, 16, "%.2f %%", percent);
 
-            tv::render_text_line(buf, buf + buf_len, NULL, ImGui::GetColorU32(color));
+            tv::render_text_line(buf, buf + buf_len, ImVec2(), ImGui::GetColorU32(color));
             ImGui::SameLine();
             // Display more accurage percentage and the actual sampling count.
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
             {
                 ImGui::SetTooltip("%.4f - %zu", percent, count);
             }
-            
         }
     }
 

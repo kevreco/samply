@@ -38,8 +38,8 @@ error "@TODO Handle UNIX-like system"
 #endif
 
 auto app_name = STR(SMP_APP_NAME);
-auto icon_path = STR("samply.ico");
-auto icon_name = "samply.ico";
+auto icon_path = STR("./resources/samply.ico");
+auto icon_name = "./resources/samply.ico";
 
 struct {
     int x, y, width, height;
@@ -120,14 +120,14 @@ int gui::show()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;    // Enable Gamepad Controls
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    ImGui::ApplyCustomTheme();
-    ImGui::MergeIconFont();
-
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_InitForOpenGL(hwnd);
     ImGui_ImplOpenGL3_Init();
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    ImGui::ApplyCustomTheme();
+    ImGui::LoadFonts();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -151,7 +151,6 @@ int gui::show()
 
     int exit_code = 0;
 
-   
     // Main loop
     bool done = false;
     while (!done)

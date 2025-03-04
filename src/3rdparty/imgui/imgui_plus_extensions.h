@@ -5,11 +5,14 @@
 // NOTE: This file is not part of imgui.
 //
 
+#define IMGUI_ENABLE_FREETYPE
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #include "imgui_internal.h"
 
-#define SMP_ICONS_FONT "./lucide.ttf"
+#define SMP_TEXT_FONT "./resources/Roboto-Medium.ttf"
+#define SMP_ICONS_FONT "./resources/lucide.ttf"
+
 #include "IconFontCppHeader/IconsLucid.h"
 
 namespace ImGui {
@@ -267,11 +270,11 @@ namespace ImGui {
         style.DisabledAlpha               = 0.70f;
     }
 
-	static inline void MergeIconFont()
+	static inline void LoadFonts()
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->AddFontDefault();
-
+		ImFont* font = io.Fonts->AddFontFromFileTTF(SMP_TEXT_FONT, 16.0f);
+		IM_ASSERT(font != nullptr);
 		// Merge in icons from Font Awesome
 		static const ImWchar icons_ranges[] = { ICON_MIN_LC, ICON_MAX_16_LC, 0 };
 		ImFontConfig icons_config;

@@ -78,24 +78,38 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 	if (options->display_line_number)
 	{
 		char buf[64];
-		char line_format[16];
-		// Format the line number format
-		{
-			int char_count = snprintf(buf, 64, "%d", visible_line_max);
 
-			// Create a string like "%99d" which would display a number + leading padding equal to 99
-			// Add 2 leading space padding by default and add a trailing space
-			static const int leading_padding = 2;
-			const char* trailing_space = " ";
-			snprintf(line_format, 16, "%%" "%d" "d" "%s", char_count + leading_padding, trailing_space);
-		}
+		const char* fmt = " %d  ";
 
-		int size = snprintf(buf, 64, line_format, line_number);
-		
-		int background_color = line_is_selected ? ImGuiCol_ScrollbarGrab : ImGuiCol_WindowBg ;
-		render_text_line(buf, buf + size, NULL, 0, ImGui::GetColorU32(background_color));
+		// Max char count displayed
+		int max_char_count = snprintf(buf, 64, fmt, visible_line_max);
+		// Calculate max graphic size.
+		ImVec2 max_text_size = ImGui::CalcTextSize(buf, buf + max_char_count);
+
+		// Format actually text for current line
+		int buf_len = snprintf(buf, 64, fmt, line_number);
+
+		int background_color = line_is_selected ? ImGuiCol_ScrollbarGrab : ImGuiCol_WindowBg;
+
+		render_text_line(buf, buf + buf_len, max_text_size, 0, ImGui::GetColorU32(background_color));
+
 		ImGui::SameLine();
 	}
+}
+
+void render_text_line(const char* begin, const char* end, ImVec2 size, ImU32 foreground_color, ImU32 background_color)
+{
+	render_text_line_ex(begin, end, size, NULL, foreground_color, background_color);
+}
+
+void render_text_line(const char* begin, const char* end)
+{
+	render_text_line_ex(begin, end, ImVec2(), NULL, 0, 0);
+}
+
+void render_text_line(const char* begin, const char* end, const char* label)
+{
+	render_text_line_ex(begin, end, ImVec2(), label, 0, 0);
 }
 
 // This item has been shaped like ImGui::Selectable.
@@ -112,7 +126,7 @@ void default_line_prelude_renderer(struct options* options, int line_number, int
 //     - ImGuiSelectableFlags_NoAutoClosePopups : See ImGui documentation.
 // 
 // Returns local window coordinate of the beginning of the text (top left)
-void render_text_line(const char* begin, const char* end, const char* label, ImU32 foreground_color, ImU32 background_color, int flags)
+void render_text_line_ex(const char* begin, const char* end, ImVec2 size_arg, const char* label, ImU32 foreground_color, ImU32 background_color)
 {
 	using namespace ImGui;
 
@@ -133,7 +147,7 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 	}
 
 	ImVec2 text_size = CalcTextSize(begin, end, true);
-	ImVec2 size_arg;
+
 	ImVec2 size(size_arg.x != 0.0f ? size_arg.x : text_size.x, size_arg.y != 0.0f ? size_arg.y : text_size.y);
 	ImVec2 pos = window->DC.CursorPos;
 
@@ -153,19 +167,12 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 	RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_Header));
 #endif
 
-	const bool disabled_item = (flags & ImGuiSelectableFlags_Disabled) != 0;
-	const ImGuiItemFlags extra_item_flags = disabled_item ? (ImGuiItemFlags)ImGuiItemFlags_Disabled : ImGuiItemFlags_None;
-	
-	bool is_visible = ItemAdd(bb, id, NULL, extra_item_flags);
+	bool is_visible = ItemAdd(bb, id, NULL, 0);
 
 	if (!is_visible)
 	{
 		return;
 	}
-
-	const bool disabled_global = (g.CurrentItemFlags & ImGuiItemFlags_Disabled) != 0;
-	if (disabled_item && !disabled_global) // Only testing this as an optimization
-		BeginDisabled();
 
 	bool hovered = false;
 	bool pushed = false;
@@ -187,12 +194,13 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 			RenderFrame(bb.Min, bb.Max, background_color, false, 0.0f);
 		}
 
-		const bool can_highlight = (flags & ImGuiSelectableFlags_Highlight);
-		if (can_highlight && (hovered || pushed))
+#if 0
+		if (hovered || pushed)
 		{
-			ImU32 col = GetColorU32(pushed ? ImGuiCol_HeaderActive : (hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header));
-			RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
+			ImU32 col = GetColorU32(pushed ? ImGuiCol_HeaderActive : ImGuiCol_HeaderHovered);
+			RenderFrame(bb.Min, bb.Max, col);
 		}
+#endif
 	}
 
 	if (is_visible)
@@ -200,13 +208,6 @@ void render_text_line(const char* begin, const char* end, const char* label, ImU
 		ImU32 color = foreground_color ? foreground_color : GetColorU32(ImGuiCol_Text);
 		window->DrawList->AddText(g.Font, g.FontSize, pos, color, begin, end);
 	}
-
-	// Automatically close popups
-	if (pushed && (window->Flags & ImGuiWindowFlags_Popup) && !(flags & ImGuiSelectableFlags_NoAutoClosePopups) && (g.LastItemData.ItemFlags & ImGuiItemFlags_AutoClosePopups))
-		CloseCurrentPopup();
-
-	if (disabled_item && !disabled_global)
-		EndDisabled();
 }
 
 int text_viewer::line::get_utf8_char_count() const
@@ -595,8 +596,7 @@ void text_viewer::render_core()
 					char line_label[64];
 					snprintf(line_label, 64, "##%d", line_index);
 
-					int text_line_flags = ImGuiSelectableFlags_SpanAvailWidth;
-					render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label, 0, 0, text_line_flags);
+					render_text_line(text_to_display.data, text_to_display.data + text_to_display.size, line_label);
 
 					line_bb = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 
