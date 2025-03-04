@@ -700,9 +700,6 @@ void text_viewer::render_core()
 			}
 		}
 	}
-
-	// Add this dummy to fix a scroll issue where last spacing is not taken into account by the scroll bar.
-	ImGui::Dummy(style.ItemSpacing);
 }
 
 float text_viewer::text_distance_from_line_start(coord pos) const
