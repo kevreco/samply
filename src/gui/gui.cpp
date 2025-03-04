@@ -172,12 +172,15 @@ namespace ui {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
         bool always_opened = true;
-        if (ImGui::Begin("Main Window", &always_opened, flags))
-        {
-            ImGui::PopStyleVar(); // Restore WindowPadding.
+        bool begin = ImGui::Begin("Main Window", &always_opened, flags);
 
+        ImGui::PopStyleVar(); // Restore WindowPadding.
+
+        if (begin)
+        {
             show_full_screen_window_body(gui);
         }
+
         ImGui::End();
 
         if (cfg.open_main_window_full_screen)
