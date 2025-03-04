@@ -32,7 +32,7 @@ struct gui {
 	// Display our application
 	int main();
 
-	void open_file(strv filepath);
+	bool open_file(strv filepath);
 	
 	// Open the specified file if it's not already opened and jump to the specified line.
 	void jump_to_file(strv filepath, size_t line);
