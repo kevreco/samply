@@ -41,11 +41,29 @@ struct gui {
 
 private:
 
+	//
+	// Main Menu
+	//
+
 	void show_main_menu_bar();
 	void show_about_window(bool* p_open);
 
-	void show_main_window(gui* gui);
-	void show_full_screen_window_body(gui* gui);
+	//
+	// Main Window
+	//
+
+	void show_main_window();
+	void show_full_screen_window_body();
+
+	//
+	// Main Window - Report Tab
+    //
+
+	void show_report_tab();
+
+	void show_report_grid();
+
+	void show_source_file();
 };
 
 #endif // SAMPLY_GUI_H

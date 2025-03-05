@@ -32,27 +32,16 @@ static config cfg;
 
 static tv::text_viewer text_viewer;
 
-// Forward function declarations
+namespace helpers {}
 
-namespace ui {
+using namespace helpers;
 
-    // Main Window - Report Tab
-    //
-    static void show_report_tab(gui* gui);
+// Helpers forward declaration
 
-    // Main Window - Report Tab - Grid
-    //
-    static void show_report_grid(gui* gui);
+namespace helpers {
 
     static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count);
     static int report_table_sort(const void* left, const void* right);
-
-    // Main Window - Report Tab - Source File
-    //
-    static void show_source_file();
-
-    // Helpers
-    //
 
     static bool is_slash(char c);
 
@@ -72,7 +61,7 @@ gui::gui(struct sampler* s, struct report* r)
     current_opened_filepath = STRV("");
     readonly_file_init(&current_file);
 
-    text_viewer.options.line_prelude = ui::render_extra_line_information;
+    text_viewer.options.line_prelude = helpers::render_extra_line_information;
     text_viewer.options.line_prelude_user_data = this;
 
     records_of_current_file = record_range_make();
@@ -85,11 +74,10 @@ gui::~gui()
 
 int gui::main()
 {
-    using namespace ui;
 
     show_main_menu_bar();
 
-    show_main_window(this);
+    show_main_window();
 
     if (cfg.open_about_window)
     {
@@ -227,7 +215,7 @@ void gui::show_about_window(bool* p_open)
     ImGui::End();
 }
 
-void gui::show_main_window(gui* gui)
+void gui::show_main_window()
 {
     // Main windows always stayed buried behind all other windows.
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -257,7 +245,7 @@ void gui::show_main_window(gui* gui)
 
     if (begin)
     {
-        show_full_screen_window_body(gui);
+        show_full_screen_window_body();
     }
 
     ImGui::End();
@@ -268,7 +256,7 @@ void gui::show_main_window(gui* gui)
     }
 }
 
-void gui::show_full_screen_window_body(gui* gui)
+void gui::show_full_screen_window_body()
 {
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
     if (ImGui::BeginTabBar("MainTabBar", tab_bar_flags))
@@ -280,7 +268,7 @@ void gui::show_full_screen_window_body(gui* gui)
         {
             ImGui::PopStyleVar(1); // Restore item spacing.
 
-            ui::show_report_tab(gui);
+            show_report_tab();
 
             ImGui::EndTabItem();
         }
@@ -296,240 +284,237 @@ void gui::show_full_screen_window_body(gui* gui)
     }
 }
 
-namespace ui {
-    
-    // Main Window - Report Tab
-    //
+void gui::show_report_tab()
+{
+    const ImGuiStyle& style = ImGui::GetStyle();
+    float splitter_width = 8.0f;
+    auto avail_size = ImGui::GetContentRegionAvail();
 
-    static void show_report_tab(gui* gui)
+    static float horiz_split_pos = avail_size.y / 2.0f; // Position the splitter at the third of the area.
+
+    ImGui::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
     {
-        const ImGuiStyle& style = ImGui::GetStyle();
-        float splitter_width = 8.0f;
-        auto avail_size = ImGui::GetContentRegionAvail();
+        ImGui::BeginChild("Top", ImVec2(avail_size.x, horiz_split_pos));
 
-        static float horiz_split_pos = avail_size.y / 2.0f; // Position the splitter at the third of the area.
-
-        ImGui::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
-        {
-            ImGui::BeginChild("Top", ImVec2(avail_size.x, horiz_split_pos));
-
-/* Vertical splitter until the list of report is functional. */
+        // Vertical splitter until the list of report is functional.
 #if 0
-            avail_size = ImGui::GetContentRegionAvail();
+        avail_size = ImGui::GetContentRegionAvail();
 
-            static float vertical_split_pos = avail_size.x / 3; // Position the splitter at the third of the area.
+        static float vertical_split_pos = avail_size.x / 3; // Position the splitter at the third of the area.
 
-            ImGui::SplitterVertical(splitter_width, &vertical_split_pos, 0, avail_size.x, avail_size.y);
-            // Top Left
-            {
-                ImGui::BeginChild("TopLeft", ImVec2(vertical_split_pos, avail_size.y));
-
-                ImGui::Text("@TODO list of report file here.");
-
-                ImGui::EndChild();
-            }
-
-            ImGui::SameLine();
-#endif
-            // Top Right
-            {
-                show_report_grid(gui);
-            }
-
-            ImGui::EndChild();
-        }
-        // Dummy to add some padding and avoid the following window overlapping the splitter.
-        // I'm not sure why it's necessary.
-        ImGui::Dummy(ImVec2(0, 0));
+        ImGui::SplitterVertical(splitter_width, &vertical_split_pos, 0, avail_size.x, avail_size.y);
+        // Top Left
         {
-            // We want the left side to take as much space as possible.
-            float expand_y = -FLT_MIN;
-            // We want to keep a margin to display the information line the selected line, position, selection etc.
-            float expand_x_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
-            ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoNav);
+            ImGui::BeginChild("TopLeft", ImVec2(vertical_split_pos, avail_size.y));
 
-            show_source_file();
+            ImGui::Text("@TODO list of report file here.");
 
             ImGui::EndChild();
         }
-    }
 
-    enum report_table_column {
-        report_table_column_PERCENT,
-        report_table_column_COUNTER,
-        report_table_column_FILE_ICON,
-        report_table_column_SYMBOL,
-        report_table_column_MODULE,
-        report_table_column_FILE,
-        report_table_column_COUNT
+        ImGui::SameLine();
+#endif
+        // Top Right
+        {
+            show_report_grid();
+        }
+
+        ImGui::EndChild();
+    }
+    // Dummy to add some padding and avoid the following window overlapping the splitter.
+    // I'm not sure why it's necessary.
+    ImGui::Dummy(ImVec2(0, 0));
+    {
+        // We want the left side to take as much space as possible.
+        float expand_y = -FLT_MIN;
+        // We want to keep a margin to display the information line the selected line, position, selection etc.
+        float expand_x_but_keep_a_margin_of = -ImGui::GetTextLineHeightWithSpacing();
+        ImGui::BeginChild("Bottom", ImVec2(expand_y, expand_x_but_keep_a_margin_of), ImGuiChildFlags_Borders | ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoNav);
+
+        show_source_file();
+
+        ImGui::EndChild();
+    }
+}
+
+enum report_table_column {
+    report_table_column_PERCENT,
+    report_table_column_COUNTER,
+    report_table_column_FILE_ICON,
+    report_table_column_SYMBOL,
+    report_table_column_MODULE,
+    report_table_column_FILE,
+    report_table_column_COUNT
+};
+
+void gui::show_report_grid()
+{
+    if (!report)
+        return;
+
+    size_t sample_count = report->sample_count;
+    summed_record* items = report->summary_by_count.data;
+    size_t items_count = report->summary_by_count.size;
+
+    static ImGuiTableFlags flags =
+        ImGuiTableFlags_ScrollX
+        | ImGuiTableFlags_ScrollY
+        | ImGuiTableFlags_Borders
+        | ImGuiTableFlags_Resizable
+        | ImGuiTableFlags_Reorderable
+        | ImGuiTableFlags_Sortable
+        | ImGuiTableFlags_Hideable;
+
+    struct col_info {
+        const char* name;
+        int flags;
+        float initial_width; // 0.0f means auto
+    } columns[report_table_column_COUNT] = {
+        { "%",       ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 0.0f },
+        { "Counter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending, 0.0f},
+        { ICON_LC_FILE_CODE,   ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 0.0f },
+        { "Symbol",  ImGuiTableColumnFlags_WidthFixed, 180.0f },
+        { "Module",  0, 0.0f },
+        { "File",    0, 0.0f },
     };
 
-    // Main Window - Report Tab - Grid
-    //
-
-    static void show_report_grid(gui* gui)
+    if (ImGui::BeginTable("report_table", report_table_column_COUNT, flags))
     {
-        report* report = gui->report;
-
-        if (!report)
-            return;
-
-        size_t sample_count = report->sample_count;
-        summed_record* items = report->summary_by_count.data;
-        size_t items_count = report->summary_by_count.size;
-
-        static ImGuiTableFlags flags =
-            ImGuiTableFlags_ScrollX
-            | ImGuiTableFlags_ScrollY
-            | ImGuiTableFlags_Borders
-            | ImGuiTableFlags_Resizable
-            | ImGuiTableFlags_Reorderable
-            | ImGuiTableFlags_Sortable
-            | ImGuiTableFlags_Hideable;
-
-        struct col_info {
-            const char* name;
-            int flags;
-            float initial_width; // 0.0f means auto
-        } columns[report_table_column_COUNT] = {
-            { "%",       ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 0.0f },
-            { "Counter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_PreferSortDescending, 0.0f},
-            { ICON_LC_FILE_CODE,   ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 0.0f },
-            { "Symbol",  ImGuiTableColumnFlags_WidthFixed, 180.0f },
-            { "Module",  0, 0.0f },
-            { "File",    0, 0.0f },
-        };
-
-        if (ImGui::BeginTable("report_table", report_table_column_COUNT, flags))
+        ImGui::TableSetupScrollFreeze(1, 1);
+        for (int i = 0; i < report_table_column_COUNT; i += 1)
         {
-            ImGui::TableSetupScrollFreeze(1, 1);
-            for (int i = 0; i < report_table_column_COUNT; i += 1)
+            if (columns[i].initial_width > 0.0f)
             {
-                if (columns[i].initial_width > 0.0f)
-                {
-                    ImGui::TableSetupColumn(columns[i].name, columns[i].flags, columns[i].initial_width);
-                }
-                else
-                {
-                    ImGui::TableSetupColumn(columns[i].name, columns[i].flags);
-                }
+                ImGui::TableSetupColumn(columns[i].name, columns[i].flags, columns[i].initial_width);
             }
-            ImGui::TableHeadersRow();
-
-            // Sort data only if sort specs have been changed!
-            if (ImGuiTableSortSpecs* sort_specs = ImGui::TableGetSortSpecs())
+            else
             {
-                if (sort_specs->SpecsDirty)
+                ImGui::TableSetupColumn(columns[i].name, columns[i].flags);
+            }
+        }
+        ImGui::TableHeadersRow();
+
+        // Sort data only if sort specs have been changed!
+        if (ImGuiTableSortSpecs* sort_specs = ImGui::TableGetSortSpecs())
+        {
+            if (sort_specs->SpecsDirty)
+            {
+                report_table_sort_with_sort_specs(sort_specs, items, items_count);
+                sort_specs->SpecsDirty = false;
+            }
+        }
+
+        double inverse_items_count = 1.0f / (double)sample_count * 100.0f;
+        for (int row_index = 0; row_index < items_count; row_index += 1)
+        {
+            summed_record item = items[row_index];
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+
+            static strv unknown_file_location = STRV("<unknown-file-location>");
+            static strv unknown_symbol = STRV("<unknown-symbol>");
+            static strv unknown_module = STRV("<unknown-module>");
+
+            bool has_file = item.source_file_name.size > 0;
+            strv filepath = item.source_file_name.size ? item.source_file_name : unknown_file_location;
+            strv filename = has_file ? path_get_last_segment(item.source_file_name) : filepath;
+            strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
+            strv mobule = item.module_name.size ? item.module_name : unknown_module;
+
+            bool jump_to_line = false;
+            // Make row selectable
+            {
+                static void* selected = 0;
+                ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
+                char buf[128];
+                snprintf(buf, 64, "##%p", item.symbol_name.data);
+
+                bool is_selected = item.symbol_name.data == selected;
+
+                if (ImGui::Selectable(buf, is_selected, selectable_flags))
                 {
-                    report_table_sort_with_sort_specs(sort_specs, items, items_count);
-                    sort_specs->SpecsDirty = false;
+                    selected = (void*)item.symbol_name.data;
                 }
+
+                // @FIXME: It does not feel right to display a hoverable tooltip.
+                // Insteda display details in a tooltip bar below the grid.
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.closest_line_number != 0)
+                {
+                    ImGui::SetTooltip(STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.closest_line_number);
+                }
+
+                // Jump to file and go to specified line on double click.
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                {
+                    jump_to_line = true;
+                }
+
+                ImGui::SameLine();
             }
 
-            double inverse_items_count = 1.0f / (double)sample_count * 100.0f;
-            for (int row_index = 0; row_index < items_count; row_index += 1)
+            ImGui::Text("%.2f", (double)item.counter * inverse_items_count);
+
+            // Display counter
             {
-                summed_record item = items[row_index];
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("%zu", item.counter);
+            }
 
-                static strv unknown_file_location = STRV("<unknown-file-location>");
-                static strv unknown_symbol = STRV("<unknown-symbol>");
-                static strv unknown_module = STRV("<unknown-module>");
+            // Display icon.
+            {
+                ImGui::TableSetColumnIndex(2);
 
-                bool has_file = item.source_file_name.size > 0;
-                strv filepath = item.source_file_name.size ? item.source_file_name : unknown_file_location;
-                strv filename = has_file ? path_get_last_segment(item.source_file_name) : filepath;
-                strv symbol = item.symbol_name.size ? item.symbol_name : unknown_symbol;
-                strv mobule = item.module_name.size ? item.module_name : unknown_module;
-
-                bool jump_to_line = false;
-                // Make row selectable
+                if (has_file)
                 {
-                    static void* selected = 0;
-                    ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
-                    char buf[128];
-                    snprintf(buf, 64, "##%p", item.symbol_name.data);
+                    char buf[32];
+                    snprintf(buf, 32, ICON_LC_FILE_CODE "##%p", item.symbol_name.data); // ### operator override ID ignoring the preceding label
 
-                    bool is_selected = item.symbol_name.data == selected;
-
-                    if (ImGui::Selectable(buf, is_selected, selectable_flags))
-                    {
-                        selected = (void*)item.symbol_name.data;
-                    }
-
-                    // @FIXME: It does not feel right to display a hoverable tooltip.
-                    // Insteda display details in a tooltip bar below the grid.
-                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.closest_line_number != 0)
-                    {
-                        ImGui::SetTooltip(STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.closest_line_number);
-                    }
-
-                    // Jump to file and go to specified line on double click.
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    if (ImGui::IconButton(buf))
                     {
                         jump_to_line = true;
                     }
-
-                    ImGui::SameLine();
-                }
-
-                ImGui::Text("%.2f", (double)item.counter * inverse_items_count);
-
-                // Display counter
-                {
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%zu", item.counter);
-                }
-
-                // Display icon.
-                {
-                    ImGui::TableSetColumnIndex(2);
-
-                    if (has_file)
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
                     {
-                        char buf[32];
-                        snprintf(buf, 32, ICON_LC_FILE_CODE "##%p", item.symbol_name.data); // ### operator override ID ignoring the preceding label
-
-                        if (ImGui::IconButton(buf))
-                        {
-                            jump_to_line = true;
-                        }
-                        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNone))
-                        {
-                            ImGui::SetTooltip("Open file: " STRV_FMT, STRV_ARG(filepath));
-                        }
+                        ImGui::SetTooltip("Open file: " STRV_FMT, STRV_ARG(filepath));
                     }
                 }
-
-                // Display symbol name.
-                {
-                    ImGui::TableSetColumnIndex(3);
-                    ImGui::Text(STRV_FMT, STRV_ARG(symbol));
-                }
-
-                // Display module name.
-                {
-                    ImGui::TableSetColumnIndex(4);
-                    ImGui::Text(STRV_FMT, STRV_ARG(mobule));
-                }
-
-                // Display file name.
-                {
-                    ImGui::TableSetColumnIndex(5);
-                    ImGui::Text(STRV_FMT, STRV_ARG(filepath));
-                }
-
-                if (jump_to_line)
-                {
-                    gui->jump_to_file(item.source_file_name, item.closest_line_number);
-                }
             }
-            ImGui::EndTable();
-        }
-    }
 
-    static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count)
+            // Display symbol name.
+            {
+                ImGui::TableSetColumnIndex(3);
+                ImGui::Text(STRV_FMT, STRV_ARG(symbol));
+            }
+
+            // Display module name.
+            {
+                ImGui::TableSetColumnIndex(4);
+                ImGui::Text(STRV_FMT, STRV_ARG(mobule));
+            }
+
+            // Display file name.
+            {
+                ImGui::TableSetColumnIndex(5);
+                ImGui::Text(STRV_FMT, STRV_ARG(filepath));
+            }
+
+            if (jump_to_line)
+            {
+                jump_to_file(item.source_file_name, item.closest_line_number);
+            }
+        }
+        ImGui::EndTable();
+    }
+}
+
+void gui::show_source_file()
+{
+    text_viewer.render();
+}
+
+namespace helpers {
+    
+    void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count)
     {
         if (items_count > 1)
         {
@@ -539,7 +524,7 @@ namespace ui {
         }
     }
 
-    static int report_table_sort(const void* left_ptr, const void* right_ptr)
+    int report_table_sort(const void* left_ptr, const void* right_ptr)
     {
         const summed_record* left = (const summed_record*)left_ptr;
         const summed_record* right = (const summed_record*)right_ptr;
@@ -587,14 +572,6 @@ namespace ui {
         if (left->counter > right->counter)
             return 1;
         return 0;
-    }
-
-    // Main Window - Report Tab - Source file
-    //
-
-    static void show_source_file()
-    {
-        text_viewer.render();
     }
 
     static void render_extra_line_information(tv::options* options, int line_number, int visible_line_max, bool line_is_selected)
