@@ -18,8 +18,10 @@
 
 #ifdef _MSC_VER
 #define SMP_CDECL __cdecl
+typedef _CoreCrtNonSecureSearchSortCompareFunction samply_qsort_func;
 #else
 #define SMP_CDECL
+typedef int (*samply_qsort_func)(void* left, void* right);
 #endif
 
 #include "strv.h"

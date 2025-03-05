@@ -493,12 +493,12 @@ namespace helpers {
         if (items_count > 1)
         {
             current_sort_specs = sort_specs; // Store in variable accessible by the process_table_sort function.
-            qsort(items, items_count, sizeof(items[0]), report_table_sort);
+            qsort(items, items_count, sizeof(items[0]), (samply_qsort_func)report_table_sort);
             current_sort_specs = NULL;
         }
     }
 
-    int report_table_sort(const void* left_ptr, const void* right_ptr)
+    int SMP_CDECL report_table_sort(const void* left_ptr, const void* right_ptr)
     {
         const summed_record* left = (const summed_record*)left_ptr;
         const summed_record* right = (const summed_record*)right_ptr;
