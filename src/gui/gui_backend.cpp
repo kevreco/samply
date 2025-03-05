@@ -70,6 +70,12 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
+strv gui::backend_identifier()
+{
+    static strv id = STRV("Dear ImGui/Win32/OpenGL3");
+    return id;
+}
+
 int gui::show()
 {
     // Create application window
@@ -89,7 +95,7 @@ int gui::show()
 
     ::RegisterClassExW(&wc);
 
-    const wchar_t* title = tmp_fmt(STR("%s %s (%d) (Dear ImGui/Win32/OpenGL3)"),
+    const wchar_t* title = tmp_fmt(STR("%s %s (%d)"),
         STR(SMP_APP_NAME),
         STR(SMP_APP_VERSION_TEXT),
         SMP_APP_VERSION_NUMBER);

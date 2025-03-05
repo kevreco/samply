@@ -217,7 +217,8 @@ namespace ui {
     {
         if (ImGui::Begin("About", p_open, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("%s %s (%d)", SMP_APP_NAME, SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
+            ImGui::Text("%s %s - (%d)", SMP_APP_NAME, SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
+            ImGui::Text("Backend: " STRV_FMT, STRV_ARG(gui::backend_identifier()));
 
             ImGui::TextLinkOpenURL("Homepage", "https://github.com/kevreco/samply");
             ImGui::SameLine();

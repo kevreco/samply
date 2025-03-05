@@ -26,6 +26,8 @@ struct gui {
 	gui(struct sampler* s, struct report* r);
 	~gui();
 
+	static strv backend_identifier();
+
 	// Return exit code
 	int show();
 
