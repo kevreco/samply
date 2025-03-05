@@ -72,6 +72,101 @@ namespace ui {
     static bool find_last_slash(strv path, size_t* index);
 
     strv path_get_last_segment(strv path);
+
+    static void render_extra_line_information(tv::options* options, int line_number, int visible_line_max, bool line_is_selected);
+}
+
+gui::gui(struct sampler* s, struct report* r)
+{
+    this->sampler = s;
+    this->report = r;
+
+    file_mapper_init(&file_mapper);
+    current_opened_filepath = STRV("");
+    readonly_file_init(&current_file);
+
+    text_viewer.options.line_prelude = ui::render_extra_line_information;
+    text_viewer.options.line_prelude_user_data = this;
+
+    records_of_current_file = record_range_make();
+}
+
+gui::~gui()
+{
+    file_mapper_destroy(&file_mapper);
+}
+
+int gui::main()
+{
+    using namespace ui;
+
+    show_main_menu_bar();
+
+    show_main_window(this);
+
+    if (cfg.open_about_window)
+    {
+       show_about(&cfg.open_about_window);
+    }
+
+    if (cfg.open_imgui_demo_window)
+    {
+        ImGui::ShowDemoWindow(&cfg.open_imgui_demo_window);
+    }
+
+    if (cfg.open_text_viewer_demo_window)
+    {
+        tv::show_demo_window(&cfg.open_text_viewer_demo_window);
+    }
+
+    return 0;
+}
+
+bool gui::open_file(strv filepath)
+{
+    static strv no_file = STRV("No file displayed");
+    static strv could_not_open = STRV("Could not open file.");
+
+    text_viewer.set_text(tv::string_view(no_file.data, no_file.size));
+
+    // Close previous file
+    if (readonly_file_is_opened(&current_file))
+    {
+        file_mapper_close(&file_mapper, &current_file);
+        readonly_file_init(&current_file);
+    }
+
+    // Open new file
+    if (!file_mapper_open(&file_mapper, &current_file, filepath))
+    {
+        text_viewer.set_text(tv::string_view(could_not_open.data, could_not_open.size));
+
+        return false;
+    }
+
+    current_opened_filepath = filepath;
+
+    record* records = report->records.data;
+    size_t record_count = report->records.size;
+    records_of_current_file = record_range_for_file(records, record_count, filepath);
+
+    tv::string_view content_view = tv::string_view(current_file.view.data, current_file.view.size);
+    text_viewer.set_text(content_view);
+
+    return true;
+}
+
+void gui::jump_to_file(strv filepath, size_t line)
+{
+    if (!strv_equals(current_opened_filepath, filepath))
+    {
+        if (!open_file(filepath))
+        {
+            return;
+        }
+    }
+
+    text_viewer.request_scroll_to_line_number(line);
 }
 
 namespace ui {
@@ -200,7 +295,7 @@ namespace ui {
             if (ImGui::BeginTabItem("Reports"))
             {
                 ImGui::PopStyleVar(1); // Restore item spacing.
-                
+
                 show_report_tab(gui);
 
                 ImGui::EndTabItem();
@@ -235,31 +330,31 @@ namespace ui {
 /* Vertical splitter until the list of report is functional. */
 #if 0
             avail_size = ImGui::GetContentRegionAvail();
-            
+
             static float vertical_split_pos = avail_size.x / 3; // Position the splitter at the third of the area.
-            
+
             ImGui::SplitterVertical(splitter_width, &vertical_split_pos, 0, avail_size.x, avail_size.y);
             // Top Left
             {
                 ImGui::BeginChild("TopLeft", ImVec2(vertical_split_pos, avail_size.y));
-                    
+
                 ImGui::Text("@TODO list of report file here.");
-            
+
                 ImGui::EndChild();
             }
-            
+
             ImGui::SameLine();
 #endif
             // Top Right
             {
                 show_report_grid(gui);
             }
-            
+
             ImGui::EndChild();
         }
         // Dummy to add some padding and avoid the following window overlapping the splitter.
         // I'm not sure why it's necessary.
-        ImGui::Dummy(ImVec2(0,0));
+        ImGui::Dummy(ImVec2(0, 0));
         {
             // We want the left side to take as much space as possible.
             float expand_y = -FLT_MIN;
@@ -296,9 +391,9 @@ namespace ui {
         size_t sample_count = report->sample_count;
         summed_record* items = report->summary_by_count.data;
         size_t items_count = report->summary_by_count.size;
-        
-        static ImGuiTableFlags flags = 
-              ImGuiTableFlags_ScrollX
+
+        static ImGuiTableFlags flags =
+            ImGuiTableFlags_ScrollX
             | ImGuiTableFlags_ScrollY
             | ImGuiTableFlags_Borders
             | ImGuiTableFlags_Resizable
@@ -376,12 +471,12 @@ namespace ui {
                     {
                         selected = (void*)item.symbol_name.data;
                     }
-                 
+
                     // @FIXME: It does not feel right to display a hoverable tooltip.
                     // Insteda display details in a tooltip bar below the grid.
                     if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal) && item.closest_line_number != 0)
                     {
-                        ImGui::SetTooltip( STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.closest_line_number);
+                        ImGui::SetTooltip(STRV_FMT " | " STRV_FMT " | line: %zu", STRV_ARG(mobule), STRV_ARG(filename), item.closest_line_number);
                     }
 
                     // Jump to file and go to specified line on double click.
@@ -392,7 +487,7 @@ namespace ui {
 
                     ImGui::SameLine();
                 }
-                
+
                 ImGui::Text("%.2f", (double)item.counter * inverse_items_count);
 
                 // Display counter
@@ -409,7 +504,7 @@ namespace ui {
                     {
                         char buf[32];
                         snprintf(buf, 32, ICON_LC_FILE_CODE "##%p", item.symbol_name.data); // ### operator override ID ignoring the preceding label
-                        
+
                         if (ImGui::IconButton(buf))
                         {
                             jump_to_line = true;
@@ -436,7 +531,7 @@ namespace ui {
                 // Display file name.
                 {
                     ImGui::TableSetColumnIndex(5);
-                    ImGui::Text(STRV_FMT, STRV_ARG(filepath) );
+                    ImGui::Text(STRV_FMT, STRV_ARG(filepath));
                 }
 
                 if (jump_to_line)
@@ -462,7 +557,7 @@ namespace ui {
     {
         const summed_record* left = (const summed_record*)left_ptr;
         const summed_record* right = (const summed_record*)right_ptr;
-      
+
         for (int n = 0; n < cfg.current_sort_specs->SpecsCount; n += 1)
         {
             // Here we identify columns using the ColumnUserID value that we ourselves passed to TableSetupColumn()
@@ -500,7 +595,7 @@ namespace ui {
             if (delta < 0)
                 return (sort_spec->SortDirection == ImGuiSortDirection_Ascending) ? -1 : +1;
         }
-        
+
         if (left->counter < right->counter)
             return -1;
         if (left->counter > right->counter)
@@ -525,7 +620,7 @@ namespace ui {
         record_range* range = &g->records_of_current_file;
 
         size_t record_count = range->end - range->begin;
-        
+
         // Get all records for the line specified.
         record_range lines = record_range_for_line(range->begin, record_count, line_number);
 
@@ -612,97 +707,5 @@ namespace ui {
 
         return result;
     }
-};
 
-gui::gui(struct sampler* s, struct report* r)
-{
-    this->sampler = s;
-    this->report = r;
-
-    file_mapper_init(&file_mapper);
-    current_opened_filepath = STRV("");
-    readonly_file_init(&current_file);
-
-    text_viewer.options.line_prelude = ui::render_extra_line_information;
-    text_viewer.options.line_prelude_user_data = this;
-
-    records_of_current_file = record_range_make();
-}
-
-gui::~gui()
-{
-    file_mapper_destroy(&file_mapper);
-}
-
-int gui::main()
-{
-    using namespace ui;
-
-    show_main_menu_bar();
-
-    show_main_window(this);
-
-    if (cfg.open_about_window)
-    {
-       show_about(&cfg.open_about_window);
-    }
-
-    if (cfg.open_imgui_demo_window)
-    {
-        ImGui::ShowDemoWindow(&cfg.open_imgui_demo_window);
-    }
-
-    if (cfg.open_text_viewer_demo_window)
-    {
-        tv::show_demo_window(&cfg.open_text_viewer_demo_window);
-    }
-
-    return 0;
-}
-
-bool gui::open_file(strv filepath)
-{
-    static strv no_file = STRV("No file displayed");
-    static strv could_not_open = STRV("Could not open file.");
-
-    text_viewer.set_text(tv::string_view(no_file.data, no_file.size));
-
-    // Close previous file
-    if (readonly_file_is_opened(&current_file))
-    {
-        file_mapper_close(&file_mapper, &current_file);
-        readonly_file_init(&current_file);
-    }
-
-    // Open new file
-    if (!file_mapper_open(&file_mapper, &current_file, filepath))
-    {
-        text_viewer.set_text(tv::string_view(could_not_open.data, could_not_open.size));
-
-        return false;
-    }
-
-    current_opened_filepath = filepath;
-
-    record* records = report->records.data;
-    size_t record_count = report->records.size;
-    records_of_current_file = record_range_for_file(records, record_count, filepath);
-
-    tv::string_view content_view = tv::string_view(current_file.view.data, current_file.view.size);
-    text_viewer.set_text(content_view);
-
-    return true;
-}
-
-void gui::jump_to_file(strv filepath, size_t line)
-{
-    if (!strv_equals(current_opened_filepath, filepath))
-    {
-        if (!open_file(filepath))
-        {
-            return;
-        }
-    }
-
-    text_viewer.request_scroll_to_line_number(line);
-}
+} // namespace ui
