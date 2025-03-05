@@ -10,7 +10,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
-#define SMP_TEXT_FONT "./resources/Roboto-Medium.ttf"
+#define SMP_TEXT_FONT "./resources/IBMPlexMono-Medium.ttf"
 #define SMP_ICONS_FONT "./resources/lucide.ttf"
 
 #include "IconFontCppHeader/IconsLucid.h"
