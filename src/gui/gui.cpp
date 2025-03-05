@@ -36,11 +36,6 @@ static tv::text_viewer text_viewer;
 
 namespace ui {
 
-    // Main Window
-    //
-    static void show_main_window(gui* gui);
-    static void show_full_screen_window_body(gui* gui);
-
     // Main Window - Report Tab
     //
     static void show_report_tab(gui* gui);
@@ -232,80 +227,77 @@ void gui::show_about_window(bool* p_open)
     ImGui::End();
 }
 
+void gui::show_main_window(gui* gui)
+{
+    // Main windows always stayed buried behind all other windows.
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    if (cfg.open_main_window_full_screen)
+    {
+        flags |= ImGuiWindowFlags_NoDecoration
+            | ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoSavedSettings;
+
+        // Remove border
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+        // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
+        // Based on your use case you may want one or the other.
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+    bool always_opened = true;
+    bool begin = ImGui::Begin("Main Window", &always_opened, flags);
+
+    ImGui::PopStyleVar(); // Restore WindowPadding.
+
+    if (begin)
+    {
+        show_full_screen_window_body(gui);
+    }
+
+    ImGui::End();
+
+    if (cfg.open_main_window_full_screen)
+    {
+        ImGui::PopStyleVar(1);
+    }
+}
+
+void gui::show_full_screen_window_body(gui* gui)
+{
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+    if (ImGui::BeginTabBar("MainTabBar", tab_bar_flags))
+    {
+        // Remove spacing under the tab bar
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+
+        if (ImGui::BeginTabItem("Reports"))
+        {
+            ImGui::PopStyleVar(1); // Restore item spacing.
+
+            ui::show_report_tab(gui);
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Processes"))
+        {
+            ImGui::PopStyleVar(1); // Restore item spacing.
+
+            ImGui::Text("@TODO: Display list of running process.");
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+}
+
 namespace ui {
     
-
-    // Main Window
-    //
-    static void show_main_window(gui* gui)
-    {
-        // Main windows always stayed buried behind all other windows.
-        ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-        if (cfg.open_main_window_full_screen)
-        {
-            flags |= ImGuiWindowFlags_NoDecoration
-                | ImGuiWindowFlags_NoMove
-                | ImGuiWindowFlags_NoSavedSettings;
-
-            // Remove border
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-            // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
-            // Based on your use case you may want one or the other.
-            const ImGuiViewport* viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-        }
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-        bool always_opened = true;
-        bool begin = ImGui::Begin("Main Window", &always_opened, flags);
-
-        ImGui::PopStyleVar(); // Restore WindowPadding.
-
-        if (begin)
-        {
-            show_full_screen_window_body(gui);
-        }
-
-        ImGui::End();
-
-        if (cfg.open_main_window_full_screen)
-        {
-            ImGui::PopStyleVar(1);
-        }
-    }
-
-    static void show_full_screen_window_body(gui* gui)
-    {
-        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-        if (ImGui::BeginTabBar("MainTabBar", tab_bar_flags))
-        {
-            // Remove spacing under the tab bar
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-            if (ImGui::BeginTabItem("Reports"))
-            {
-                ImGui::PopStyleVar(1); // Restore item spacing.
-
-                show_report_tab(gui);
-
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Processes"))
-            {
-                ImGui::PopStyleVar(1); // Restore item spacing.
-
-                ImGui::Text("@TODO: Display list of running process.");
-                ImGui::EndTabItem();
-            }
-            ImGui::EndTabBar();
-        }
-    }
-
     // Main Window - Report Tab
     //
 

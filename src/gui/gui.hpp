@@ -43,6 +43,9 @@ private:
 
 	void show_main_menu_bar();
 	void show_about_window(bool* p_open);
+
+	void show_main_window(gui* gui);
+	void show_full_screen_window_body(gui* gui);
 };
 
 #endif // SAMPLY_GUI_H
