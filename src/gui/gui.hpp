@@ -41,6 +41,7 @@ struct gui {
 
 private:
 
+	void show_main_menu_bar();
 	void show_about_window(bool* p_open);
 };
 

@@ -36,14 +36,6 @@ static tv::text_viewer text_viewer;
 
 namespace ui {
 
-    // Menu
-    //
-    static void show_main_menu_bar();
-
-    // Menu - About
-    //
-    static void show_about(bool* p_open);
-
     // Main Window
     //
     static void show_main_window(gui* gui);
@@ -173,6 +165,44 @@ void gui::jump_to_file(strv filepath, size_t line)
 // Private
 //-----------------------------------------------------------------------
 
+void gui::show_main_menu_bar()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Options")) {}
+            ImGui::Separator();
+            if (ImGui::MenuItem("Preferences")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::BeginMenu("Debug"))
+            {
+                ImGui::Checkbox("Show ImGui Demo Window", &cfg.open_imgui_demo_window);
+                ImGui::Checkbox("Show Text Viewer Demo Window", &cfg.open_text_viewer_demo_window);
+
+                ImGui::Checkbox("'Fullscreen' Main Window", &cfg.open_main_window_full_screen);
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("About", "CTRL+M"))
+        {
+            cfg.open_about_window = true;
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+}
+
 void gui::show_about_window(bool* p_open)
 {
     if (ImGui::Begin("About", p_open, ImGuiWindowFlags_AlwaysAutoResize))
@@ -203,46 +233,7 @@ void gui::show_about_window(bool* p_open)
 }
 
 namespace ui {
-
-    // Menu
-    //
-    static void show_main_menu_bar()
-    {
-        if (ImGui::BeginMainMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Edit"))
-            {
-                if (ImGui::MenuItem("Options")) {}
-                ImGui::Separator();
-                if (ImGui::MenuItem("Preferences")) {}
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Help"))
-            {
-                if (ImGui::BeginMenu("Debug"))
-                {
-                    ImGui::Checkbox("Show ImGui Demo Window", &cfg.open_imgui_demo_window);
-                    ImGui::Checkbox("Show Text Viewer Demo Window", &cfg.open_text_viewer_demo_window);
-
-                    ImGui::Checkbox("'Fullscreen' Main Window", &cfg.open_main_window_full_screen);
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("About", "CTRL+M"))
-            {
-                cfg.open_about_window = true;
-            }
-
-            ImGui::EndMainMenuBar();
-        }
-    }
+    
 
     // Main Window
     //
