@@ -42,17 +42,17 @@ struct summary_binary_header_v1 {
 	uint64_t total_entry_count;
 };
 
-static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right);
-static bool record_by_file_predicate_less(record* left, record* right);
-static bool record_by_line_predicate_less(record* left, record* right);
+static bool summed_record_by_count_predicate_less(const summed_record* left, const summed_record* right);
+static bool record_by_file_predicate_less(const record* left, const record* right);
+static bool record_by_line_predicate_less(const record* left, const record* right);
 
 /* Sort by source file, then by line number, then by address. */
-static bool record_predicate_less(record* left, record* right);
+static bool record_predicate_less(const record* left, const record* right);
 
 static void upsert_record(report* r, record* rec);
 
 static void update_summary_with(report* r, record* rec);
-static int compare_summed_record(summed_record* left, summed_record* right);
+static int compare_summed_record(const summed_record* left, const summed_record* right);
 
 static void write_bytes(FILE* f, void* data, size_t byte_count);
 static void read_bytes(FILE* f, void* data, size_t byte_count);
@@ -288,23 +288,23 @@ record_range record_range_for_line(record* records, size_t count, size_t line_nu
 	return range;
 }
 
-static bool summed_record_by_count_predicate_less(summed_record* left, summed_record* right)
+static bool summed_record_by_count_predicate_less(const summed_record* left, const summed_record* right)
 {
 	return left->symbol_hash < right->symbol_hash;
 }
 
-static bool record_by_file_predicate_less(record* left, record* right)
+static bool record_by_file_predicate_less(const record* left, const record* right)
 {
 	return strv_lexicagraphical_compare(left->source_file, right->source_file) < 0;
 }
 
-static bool record_by_line_predicate_less(record* left, record* right)
+static bool record_by_line_predicate_less(const record* left, const record* right)
 {
 	return left->line_number < right->line_number;
 }
 
 /* Sort by source file, then by line number, then by address. */
-static bool record_predicate_less(record* left, record* right)
+static bool record_predicate_less(const record* left, const record* right)
 {
 	int cmp = strv_lexicagraphical_compare(left->source_file, right->source_file);
 	if (cmp != 0)
