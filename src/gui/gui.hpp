@@ -38,6 +38,10 @@ struct gui {
 	
 	// Open the specified file if it's not already opened and jump to the specified line.
 	void jump_to_file(strv filepath, size_t line);
+
+private:
+
+	void show_about_window(bool* p_open);
 };
 
 #endif // SAMPLY_GUI_H

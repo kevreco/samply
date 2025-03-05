@@ -106,7 +106,7 @@ int gui::main()
 
     if (cfg.open_about_window)
     {
-       show_about(&cfg.open_about_window);
+        show_about_window(&cfg.open_about_window);
     }
 
     if (cfg.open_imgui_demo_window)
@@ -169,6 +169,39 @@ void gui::jump_to_file(strv filepath, size_t line)
     text_viewer.request_scroll_to_line_number(line);
 }
 
+//-----------------------------------------------------------------------
+// Private
+//-----------------------------------------------------------------------
+
+void gui::show_about_window(bool* p_open)
+{
+    if (ImGui::Begin("About", p_open, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("%s %s - (%d)", SMP_APP_NAME, SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
+        ImGui::Text("Backend: " STRV_FMT, STRV_ARG(gui::backend_identifier()));
+
+        ImGui::TextLinkOpenURL("Homepage", "https://github.com/kevreco/samply");
+        ImGui::SameLine();
+        ImGui::TextLinkOpenURL("FAQ", "@TODO");
+        ImGui::SameLine();
+        ImGui::TextLinkOpenURL("Wiki", "@TODO");
+        ImGui::SameLine();
+        ImGui::TextLinkOpenURL("Releases", "@TODO");
+        ImGui::Separator();
+        ImGui::Text("(c) kevreco");
+        ImGui::Text("Developed by kevreco.");
+        ImGui::Text("%s is licensed under the MIT License", SMP_APP_NAME);
+        {
+            ImGui::Text("See");
+            ImGui::SameLine();
+            ImGui::TextLinkOpenURL("LICENSE.md", "https://github.com/kevreco/samply/LICENSE.md");
+            ImGui::SameLine();
+            ImGui::Text("for more information.");
+        }
+    }
+    ImGui::End();
+}
+
 namespace ui {
 
     // Menu
@@ -209,37 +242,6 @@ namespace ui {
 
             ImGui::EndMainMenuBar();
         }
-    }
-
-    // Menu - About
-    //
-    static void show_about(bool* p_open)
-    {
-        if (ImGui::Begin("About", p_open, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Text("%s %s - (%d)", SMP_APP_NAME, SMP_APP_VERSION_TEXT, SMP_APP_VERSION_NUMBER);
-            ImGui::Text("Backend: " STRV_FMT, STRV_ARG(gui::backend_identifier()));
-
-            ImGui::TextLinkOpenURL("Homepage", "https://github.com/kevreco/samply");
-            ImGui::SameLine();
-            ImGui::TextLinkOpenURL("FAQ", "@TODO");
-            ImGui::SameLine();
-            ImGui::TextLinkOpenURL("Wiki", "@TODO");
-            ImGui::SameLine();
-            ImGui::TextLinkOpenURL("Releases", "@TODO");
-            ImGui::Separator();
-            ImGui::Text("(c) kevreco");
-            ImGui::Text("Developed by kevreco.");
-            ImGui::Text("%s is licensed under the MIT License", SMP_APP_NAME);
-            {
-                ImGui::Text("See");
-                ImGui::SameLine();
-                ImGui::TextLinkOpenURL("LICENSE.md", "https://github.com/kevreco/samply/LICENSE.md");
-                ImGui::SameLine();
-                ImGui::Text("for more information.");
-            }
-        }
-        ImGui::End();
     }
 
     // Main Window
