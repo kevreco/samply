@@ -4,41 +4,13 @@
 
 #include "imgui_plus_extensions.h"
 
-#include "text_viewer/text_viewer.hpp"
-
 #include "samply.h"
 #include "report.h"
 
-struct config {
-
-    // Help - Debug
-    //
-    bool open_main_window_full_screen = true;
-    bool open_imgui_demo_window = false;
-    bool open_text_viewer_demo_window = false;
-
-    // About
-    //
-    bool open_about_window = false;
-
-    // Misc
-    //
+namespace helpers {
 
     // To sort tables.
-    const ImGuiTableSortSpecs* current_sort_specs = 0;
-};
-
-static config cfg;
-
-static tv::text_viewer text_viewer;
-
-namespace helpers {}
-
-using namespace helpers;
-
-// Helpers forward declaration
-
-namespace helpers {
+    static const ImGuiTableSortSpecs* current_sort_specs;
 
     static void report_table_sort_with_sort_specs(ImGuiTableSortSpecs* sort_specs, summed_record* items, size_t items_count);
     static int report_table_sort(const void* left, const void* right);
@@ -51,6 +23,8 @@ namespace helpers {
 
     static void render_extra_line_information(tv::options* options, int line_number, int visible_line_max, bool line_is_selected);
 }
+
+using namespace helpers;
 
 gui::gui(struct sampler* s, struct report* r)
 {
@@ -518,9 +492,9 @@ namespace helpers {
     {
         if (items_count > 1)
         {
-            cfg.current_sort_specs = sort_specs; // Store in variable accessible by the process_table_sort function.
+            current_sort_specs = sort_specs; // Store in variable accessible by the process_table_sort function.
             qsort(items, items_count, sizeof(items[0]), report_table_sort);
-            cfg.current_sort_specs = NULL;
+            current_sort_specs = NULL;
         }
     }
 
@@ -529,11 +503,11 @@ namespace helpers {
         const summed_record* left = (const summed_record*)left_ptr;
         const summed_record* right = (const summed_record*)right_ptr;
 
-        for (int n = 0; n < cfg.current_sort_specs->SpecsCount; n += 1)
+        for (int n = 0; n < current_sort_specs->SpecsCount; n += 1)
         {
             // Here we identify columns using the ColumnUserID value that we ourselves passed to TableSetupColumn()
             // We could also choose to identify columns based on their index (sort_spec->ColumnIndex), which is simpler!
-            const ImGuiTableColumnSortSpecs* sort_spec = &cfg.current_sort_specs->Specs[n];
+            const ImGuiTableColumnSortSpecs* sort_spec = &current_sort_specs->Specs[n];
             int delta = 0;
             switch (sort_spec->ColumnIndex)
             {

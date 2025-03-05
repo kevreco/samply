@@ -1,11 +1,12 @@
 #ifndef SAMPLY_GUI_H
 #define SAMPLY_GUI_H
 
+#include "text_viewer/text_viewer.hpp"
+
 #include "utils/file_mapper.h"
 #include "report.h" // record_range
 
 struct sampler;
-struct report;
 
 struct gui {
 
@@ -22,6 +23,22 @@ struct gui {
 	readonly_file current_file;
 
 	record_range records_of_current_file;
+
+	struct config {
+
+		// Help - Debug
+		//
+		bool open_main_window_full_screen = true;
+		bool open_imgui_demo_window = false;
+		bool open_text_viewer_demo_window = false;
+
+		// About
+		//
+		bool open_about_window = false;
+
+	} cfg;
+
+	tv::text_viewer text_viewer;
 
 	gui(struct sampler* s, struct report* r);
 	~gui();
