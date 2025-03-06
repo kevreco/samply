@@ -13,8 +13,6 @@ bool args_are_valid(cmd_args args)
 void process_init(process* p)
 {
 	memset(p, 0, sizeof(process));
-
-	return true;
 }
 
 bool process_init_with(process* p, cmd_args args)
