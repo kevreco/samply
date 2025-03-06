@@ -126,18 +126,6 @@ void gui::show_main_menu_bar()
 {
     if (ImGui::BeginMainMenuBar())
     {
-        if (ImGui::BeginMenu("File"))
-        {
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Edit"))
-        {
-            if (ImGui::MenuItem("Options")) {}
-            ImGui::Separator();
-            if (ImGui::MenuItem("Preferences")) {}
-            ImGui::EndMenu();
-        }
-
         if (ImGui::BeginMenu("Help"))
         {
             if (ImGui::BeginMenu("Debug"))
@@ -169,11 +157,6 @@ void gui::show_about_window(bool* p_open)
 
         ImGui::TextLinkOpenURL("Homepage", "https://github.com/kevreco/samply");
         ImGui::SameLine();
-        ImGui::TextLinkOpenURL("FAQ", "@TODO");
-        ImGui::SameLine();
-        ImGui::TextLinkOpenURL("Wiki", "@TODO");
-        ImGui::SameLine();
-        ImGui::TextLinkOpenURL("Releases", "@TODO");
         ImGui::Separator();
         ImGui::Text("(c) kevreco");
         ImGui::Text("Developed by kevreco.");
@@ -246,7 +229,8 @@ void gui::show_full_screen_window_body()
 
             ImGui::EndTabItem();
         }
-
+// Hide unused processes tab.
+#if 0
         if (ImGui::BeginTabItem("Processes"))
         {
             ImGui::PopStyleVar(1); // Restore item spacing.
@@ -254,6 +238,7 @@ void gui::show_full_screen_window_body()
             ImGui::Text("@TODO: Display list of running process.");
             ImGui::EndTabItem();
         }
+#endif
         ImGui::EndTabBar();
     }
 }
