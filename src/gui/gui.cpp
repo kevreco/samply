@@ -193,16 +193,18 @@ void gui::show_main_window()
         ImGui::SetNextWindowSize(viewport->WorkSize);
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
     bool always_opened = true;
-    bool begin = ImGui::Begin("Main Window", &always_opened, flags);
-
-    ImGui::PopStyleVar(); // Restore WindowPadding.
-
-    if (begin)
+    if (ImGui::Begin("Main Window", &always_opened, flags))
     {
-        show_full_screen_window_body();
+        display_main_window_header();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        display_main_window_body();
     }
 
     ImGui::End();
@@ -213,8 +215,14 @@ void gui::show_main_window()
     }
 }
 
-void gui::show_full_screen_window_body()
+void gui::display_main_window_header()
 {
+}
+
+void gui::display_main_window_body()
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_TabBarBorderSize, 0.0f);
+
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
     if (ImGui::BeginTabBar("MainTabBar", tab_bar_flags))
     {
@@ -241,6 +249,8 @@ void gui::show_full_screen_window_body()
 #endif
         ImGui::EndTabBar();
     }
+
+    ImGui::PopStyleVar();
 }
 
 void gui::show_report_tab()
