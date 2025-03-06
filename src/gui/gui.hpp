@@ -10,6 +10,11 @@ struct sampler;
 
 struct gui {
 
+	static const int max_command_line_char = 8191;
+	static const int max_command_line_buffer_char = max_command_line_char + 1;
+
+	char command_line_buffer[max_command_line_buffer_char] = {0};
+
 	sampler* sampler = 0;
 	report* report = 0;
 
@@ -55,6 +60,9 @@ struct gui {
 	
 	// Open the specified file if it's not already opened and jump to the specified line.
 	void jump_to_file(strv filepath, size_t line);
+
+	void set_command_line_text(strv command_line);
+	void set_command_line_from_args(cmd_args args);
 
 private:
 

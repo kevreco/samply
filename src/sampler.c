@@ -12,6 +12,7 @@ enum sample_status_result {
 	sample_status_result_SUSPEND_FAILED,
 	sample_status_result_GET_CONTEXT_FAILED,
 	sample_status_result_RESUME_FAILED,
+	sample_status_result_PROCESS_EXITED
 };
 
 static int sample_thread_procedure(sampler* s);
@@ -167,7 +168,8 @@ static int sample_thread_procedure(sampler* s)
 		}
 		else
 		{
-			log_debug("Sampler command was null");
+			log_debug("Sampler command was null, this is likely due to a timeout.");
+			s->is_running = false;
 		}
 	}
 
@@ -184,6 +186,10 @@ static int sample_thread_procedure(sampler* s)
 */
 static enum sample_result get_sample(sampler* s, process* process)
 {
+	if (!process_is_running(process))
+	{
+		return sample_status_result_PROCESS_EXITED;
+	}
 #if _WIN32
 	HANDLE thread_handle = process->thread_handle;
 	DWORD result = SuspendThread(thread_handle);

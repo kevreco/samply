@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     if (args_are_valid(args))
     {
         process p;
-        if (process_init_with(&p, args))
+        if (process_init_with_args(&p, args))
         {
             no_subprocess_error = run_process(&p, &s, &report);
 
@@ -57,7 +57,8 @@ int main(int argc, char** argv)
     {
         gui g = { &s, &report };
 
-        // @TODO do not return since resources must be destroyed.
+        g.set_command_line_from_args(args);
+        
         exit_code = g.show();
     }
 

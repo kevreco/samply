@@ -189,7 +189,7 @@ void report_load_from_sampler(report* r, sampler* s)
 	}
 
 	/* Sort entries by counters. */
-	qsort(r->summary_by_count.data, r->summary_by_count.size, sizeof(summed_record), (samply_qsort_func)compare_summed_record);
+	samply_qsort(r->summary_by_count.data, r->summary_by_count.size, sizeof(summed_record), compare_summed_record);
 
 	SMP_ASSERT(total_counter_check == s->sample_count);
 }

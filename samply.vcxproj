@@ -145,6 +145,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\process.c" />
     <ClCompile Include="src\sampler.c" />
+    <ClCompile Include="src\samply.c" />
     <ClCompile Include="src\string_store.c" />
     <ClCompile Include="src\symbol_manager.c" />
     <ClCompile Include="src\utils\file_mapper.c" />

@@ -1,6 +1,8 @@
 #include "process.h"
 #include "utils/log.h"
 
+#include "samply.h"
+
 bool args_are_valid(cmd_args args)
 {
 #ifdef _WIN32
@@ -15,7 +17,7 @@ void process_init(process* p)
 	memset(p, 0, sizeof(process));
 }
 
-bool process_init_with(process* p, cmd_args args)
+bool process_init_with_args(process* p, cmd_args args)
 {
 	process_init(p);
 
@@ -25,6 +27,22 @@ bool process_init_with(process* p, cmd_args args)
 	}
 
 	p->args = args;
+
+	return true;
+}
+
+bool process_init_with_strv(process* p, strv str)
+{
+	process_init(p);
+
+	if (!str.size) {
+		log_error("Process initialized with empty string");
+		return false;
+	}
+	
+	samply_convert_utf8_to_wchar(p->file_buffer, MAX_FILE_BUFFER_SIZE, str);
+
+	p->args = p->file_buffer;
 
 	return true;
 }

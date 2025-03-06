@@ -10,6 +10,8 @@
 
 #include "stdbool.h"
 
+#include "strv.h"
+
 #if __cplusplus
 extern "C" {
 #endif
@@ -20,7 +22,8 @@ typedef wchar_t* cmd_args;
 typedef HANDLE handle;
 typedef DWORD exit_code;
 typedef DWORD64 address;
-
+#define MAX_FILE_BUFFER_SIZE (1024 * 8)
+typedef wchar_t file_buffer[MAX_FILE_BUFFER_SIZE];
 #else /* UNIX */
 
 typedef cmd_args cmd_args;
@@ -31,6 +34,7 @@ struct {
 typedef int handle;
 typedef int exit_code;
 typedef size_t address;
+typedef char file_buffer;
 #endif
 
 bool args_are_valid(cmd_args args);
@@ -41,10 +45,14 @@ struct process {
 	handle process_handle;
 	handle thread_handle;
 	exit_code exit_code;
+#if _WIN32
+	file_buffer file_buffer;
+#endif
 };
 
 void process_init(process* p);
-bool process_init_with(process* p, cmd_args args);
+bool process_init_with_args(process* p, cmd_args args);
+bool process_init_with_strv(process* p, strv strv);
 void process_destroy(process* p);
 
 bool process_run_async(process* p);

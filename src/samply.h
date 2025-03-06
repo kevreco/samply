@@ -1,6 +1,8 @@
 #ifndef SAMPLY_H
 #define SAMPLY_H
 
+#include "strv.h"
+
 #define SMP_APP_NAME "Samply"
 
 /* Version of the application. */
@@ -18,37 +20,25 @@
 
 #ifdef _MSC_VER
 #define SMP_CDECL __cdecl
-typedef _CoreCrtNonSecureSearchSortCompareFunction samply_qsort_func;
 #else
 #define SMP_CDECL
-typedef int (*samply_qsort_func)(void* left, void* right);
 #endif
-
-#include "strv.h"
 
 #if __cplusplus
 extern "C" {
 #endif
 
-static inline size_t samply_djb2_hash(strv str)
-{
+void samply_qsort(void* item_ptr, size_t count, size_t size_of_element, int (*comp)(const void*, const void*));
 
-#define SMP_HASH_INIT (5381)
-#define SMP_HASH(h, c) ((((h) << 5) + (h)) + (c))
+size_t samply_djb2_hash(strv str);
 
-	size_t hash = SMP_HASH_INIT;
-	size_t i = 0;
-	while (i < str.size)
-	{
-		hash = SMP_HASH(hash, str.data[i]);
-		i += 1;
-	}
+#ifdef _WIN32
 
-	return hash;
+int samply_convert_utf8_to_wchar_size(strv chars);
 
-#undef SMP_HASH_INIT
-#undef SMP_HASH
-}
+int samply_convert_utf8_to_wchar(wchar_t* buffer, size_t buffer_size, strv chars);
+
+#endif
 
 #if __cplusplus
 }

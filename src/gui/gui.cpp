@@ -1,7 +1,5 @@
 #include "gui.hpp"
 
-#include <stdlib.h> // qsort
-
 #include "imgui_plus_extensions.h"
 
 #include "samply.h"
@@ -48,7 +46,6 @@ gui::~gui()
 
 int gui::main()
 {
-
     show_main_menu_bar();
 
     show_main_window();
@@ -116,6 +113,26 @@ void gui::jump_to_file(strv filepath, size_t line)
     }
 
     text_viewer.request_scroll_to_line_number(line);
+}
+
+void gui::set_command_line_text(strv command_line)
+{
+    snprintf(command_line_buffer, max_command_line_buffer_char, STRV_FMT, STRV_ARG(command_line));
+}
+
+void gui::set_command_line_from_args(cmd_args args)
+{
+    if (!args)
+    {
+        return;
+    }
+
+#if _WIN32
+    size_t converted_char;
+    wcstombs_s(&converted_char, command_line_buffer, max_command_line_buffer_char, args, wcslen(args));
+#else
+    set_command_line_text(args, strlen(args));
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -492,7 +509,7 @@ namespace helpers {
         if (items_count > 1)
         {
             current_sort_specs = sort_specs; // Store in variable accessible by the process_table_sort function.
-            qsort(items, items_count, sizeof(items[0]), (samply_qsort_func)report_table_sort);
+            samply_qsort(items, items_count, sizeof(items[0]), report_table_sort);
             current_sort_specs = NULL;
         }
     }

@@ -1,5 +1,7 @@
 #include "file_mapper.h"
 
+#include "samply.h"
+
 #include "log.h"
 
 void file_mapper_init(file_mapper* fm)
@@ -18,7 +20,7 @@ void file_mapper_destroy(file_mapper* fm)
 static int convert_utf8_to_wchar(file_mapper* fm, strv chars)
 {
     /* Get length of converted string. */
-    int len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, chars.data, (int)chars.size, NULL, 0);
+    int len = samply_convert_utf8_to_wchar_size(chars); 
     int result = 0;
 
     /* Ensure the buffer is big enough. */
@@ -27,7 +29,7 @@ static int convert_utf8_to_wchar(file_mapper* fm, strv chars)
     if (len != 0)
     {
         /* Convert From UTF-8. */
-        result = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, chars.data, (int)chars.size, fm->chars.data, len);
+        result = samply_convert_utf8_to_wchar(fm->chars.data, len, chars);
     }
 
     /* Ensure that the buffer ends with a null terminated wchar. */
