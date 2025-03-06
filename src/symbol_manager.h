@@ -15,6 +15,7 @@ typedef struct symbol_manager symbol_manager;
 struct symbol_manager {
 	struct string_store* string_store;
 	handle process_handle;
+	bool initialized;
 #if _WIN32
 	char* symbol_buffer;
 #endif
@@ -22,10 +23,11 @@ struct symbol_manager {
 
 void symbol_manager_init(symbol_manager* m, struct string_store* s);
 void symbol_manager_destroy(symbol_manager* m);
-void symbol_manager_clear(symbol_manager* m);
 
 /* Load symbols of specified process. */
 void symbol_manager_load(symbol_manager* m, handle process_handle);
+/* Unload symbols of specified process. */
+void symbol_manager_unload(symbol_manager* m);
 
 /* Get symbol name from the process loaded by symbol_manager_load. */
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr);

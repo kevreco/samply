@@ -36,23 +36,55 @@ void symbol_manager_load(symbol_manager* m, handle process_handle)
 {
 #if _WIN32
 
-	SymSetOptions(SYMOPT_LOAD_LINES);
+	SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES);
+
+	if (m->initialized)
+	{
+		log_error("Symbol already initialized, this must be done only once. %d", process_handle);
+		return;
+	}
 
 	if (!SymInitialize(process_handle, NULL, TRUE))
 	{
 		/* @TODO Get string from GetLastError and display it. */
-		log_error("Could not initialize symbols");
+		log_error("Could not initialize symbols: %d", process_handle);
 		return;
 	}
 
+	m->initialized = true;
 	m->process_handle = process_handle;
+
 #else
 #error "symbol_manager_load not implemented yet"
 #endif
 }
 
+void symbol_manager_unload(symbol_manager* m)
+{
+#if _WIN32
+	if (!m->initialized)
+	{
+		return;
+	}
+
+	if (!SymCleanup(m->process_handle))
+	{
+		log_error("Could not cleanup symbols");
+	}
+	m->process_handle = 0;
+	m->initialized = false;
+#else
+#error "symbol_manager_unload not implemented yet"
+#endif
+}
+
 strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 {
+	if (!m->initialized)
+	{
+		return (strv)STRV("");
+	}
+
 #if _WIN32
 	DWORD64  dwDisplacement = 0;
 	PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)m->symbol_buffer;
@@ -75,6 +107,11 @@ strv symbol_manager_get_symbol_name(symbol_manager* m, address addr)
 
 strv symbol_manager_get_module_name(symbol_manager* m, address addr)
 {
+	if (!m->initialized)
+	{
+		return (strv)STRV("");
+	}
+
 	HMODULE hModule = NULL;
 	GetModuleHandleEx(
 		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
@@ -100,6 +137,11 @@ strv symbol_manager_get_module_name(symbol_manager* m, address addr)
 
 void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_file, size_t* line_number)
 {
+	if (!m->initialized)
+	{
+		return;
+	}
+
 	DWORD displacement = 0;
 	IMAGEHLP_LINE64 line;
 	line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
@@ -116,16 +158,4 @@ void symbol_manager_get_location(symbol_manager* m, address addr, strv* source_f
 		*source_file = (strv)STRV("");
 		*line_number = 0;
 	}
-}
-
-void symbol_manager_clear(symbol_manager* m)
-{
-#if _WIN32
-	if (!SymCleanup(m->process_handle))
-	{
-		log_error("Could not cleanup symbols");
-	}
-#else
-#error "symbol_manager_clear not implemented yet"
-#endif
 }
