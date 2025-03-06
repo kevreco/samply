@@ -166,6 +166,10 @@ void gui::show_about_window(bool* p_open)
             ImGui::SameLine();
             ImGui::TextLinkOpenURL("LICENSE.md", "https://github.com/kevreco/samply/LICENSE.md");
             ImGui::SameLine();
+            ImGui::Text("and");
+            ImGui::SameLine();
+            ImGui::TextLinkOpenURL("README.md", "https://github.com/kevreco/samply/README.md");
+            ImGui::SameLine();
             ImGui::Text("for more information.");
         }
     }
