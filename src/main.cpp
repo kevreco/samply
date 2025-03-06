@@ -107,9 +107,7 @@ bool run_process(process* p, sampler* s, report* report)
         return false;
     }
 
-    sampler_task task = { 0 };
-    task.process = p;
-    sampler_run(s, &task);
+    sampler_run(s, p);
 
     if (!process_wait(p))
     {

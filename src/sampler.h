@@ -14,19 +14,17 @@
 extern "C" {
 #endif
 
-enum sample_status_result {
-	sample_status_result_NONE,
-	sample_status_result_SUCCESS,
-	sample_status_result_SUSPEND_FAILED,
-	sample_status_result_GET_CONTEXT_FAILED,
-	sample_status_result_RESUME_FAILED
+enum sampler_command_type {
+	sampler_command_type_NONE,
+	sampler_command_type_START_SAMPLING,
+	sampler_command_type_EXIT
 };
 
-typedef struct sampler_task sampler_task;
-struct sampler_task {
-	const char* filename;
-	process* process;
-	enum sample_status_result status_result;
+typedef struct sampler_command sampler_command;
+struct sampler_command {
+	enum sampler_command_type type;
+	/* sampler task only used for the sampler_command_type_START_SAMPLING command. */
+	process process;
 };
 
 typedef struct record record;
@@ -47,14 +45,22 @@ struct sampler {
 	/* Thread kept alive to perform the sampling. */
 	thread_ptr_t thread;
 
-	/* Timer only used to sleep threads. */
+	/* Timer only used to sleep the sampler thread. */
 	thread_timer_t sleeper;
 
+	/* Command to pass command to the sampler thread from another thread. */
+	thread_queue_t thread_queue;
+
+	/* Command buffer for the thread_queue */
+	sampler_command* command_buffer[1];
+
+	/* Actually reusable command that will be passed in the thread_queue. */
+	sampler_command command;
+
 	bool must_end_sampling;
+	bool must_end_thread;
 
-	/* Current task. */
-	sampler_task* task;
-
+	bool is_running;
 	/* Number of sample from the current or last task. */
 	size_t sample_count;
 
@@ -72,8 +78,12 @@ void sampler_init(sampler* s);
 /* Stop sampling and wait for the thread to be finished. */
 int sampler_destroy(sampler* s);
 
-/* Add new sampling if there is not already one running. */
-bool sampler_run(sampler* s, sampler_task* task);
+/* Set process to sampler if there is not already one running.
+   Returns true if it was successfuly added. */
+bool sampler_run(sampler* s, process* process);
+
+/* Sampling is running. */
+bool sampler_is_running(sampler* s);
 
 /* Stop sampling. */
 void sampler_stop(sampler* s);
