@@ -43,7 +43,8 @@ struct process {
 	exit_code exit_code;
 };
 
-bool process_init(process* p, cmd_args args);
+void process_init(process* p);
+bool process_init_with(process* p, cmd_args args);
 void process_destroy(process* p);
 
 bool process_run_async(process* p);

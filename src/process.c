@@ -10,14 +10,22 @@ bool args_are_valid(cmd_args args)
 #endif
 }
 
-bool process_init(process* p, cmd_args args)
+void process_init(process* p)
 {
+	memset(p, 0, sizeof(process));
+
+	return true;
+}
+
+bool process_init_with(process* p, cmd_args args)
+{
+	process_init(p);
+
 	if (args == NULL) {
 		log_error("Process initialized with empty arguments");
 		return false;
 	}
 
-	memset(p, 0, sizeof(process));
 	p->args = args;
 
 	return true;
@@ -32,6 +40,7 @@ void process_destroy(process* p)
 #error "process_destroy not implemented yet"
 #endif
 }
+
 bool process_run_async(process* p)
 {
 #ifdef _WIN32
