@@ -37,6 +37,8 @@ gui::gui(struct sampler* s, struct report* r)
     text_viewer.options.line_prelude_user_data = this;
 
     records_of_current_file = record_range_make();
+
+    process_init(&process);
 }
 
 gui::~gui()
@@ -240,6 +242,42 @@ void gui::show_main_window()
 
 void gui::display_main_window_header()
 {
+    ImGui::Text("Command Line:");
+    ImGui::InputTextWithoutLabel("##Command Line", command_line_buffer, max_command_line_char);
+
+    bool is_running = sampler_is_running(sampler);
+    if (is_running)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    bool run_pressed = ImGui::Button("Run");
+
+    if (is_running)
+    {
+        ImGui::EndDisabled();
+    }
+
+    // Process exited
+    if (!is_running && sampling_started)
+    {
+        sampling_started = false;
+
+        process_destroy(&process);
+        process_init(&process);
+        sampler_stop(sampler);
+        report_load_from_sampler(report, sampler);
+    }
+
+    if (run_pressed)
+    {
+        strv s = strv_make_from(command_line_buffer, strlen(command_line_buffer));
+        process_init_with_strv(&process, s);
+        process_run_async(&process);
+        sampler_run(sampler, &process);
+
+        sampling_started = true;
+    }
 }
 
 void gui::display_main_window_body()

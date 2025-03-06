@@ -17,6 +17,9 @@ struct gui {
 
 	sampler* sampler = 0;
 	report* report = 0;
+	// Process being sampled.
+	process process;
+	bool sampling_started = false;
 
 	// Context to open and close (mmapped) readonly files
 	file_mapper file_mapper;

@@ -17,6 +17,15 @@
 
 namespace ImGui {
 
+	static bool InputTextWithoutLabel(const char* label_id, char* buf, size_t buf_len)
+	{
+		float avail_x = ImGui::GetContentRegionAvail().x;
+		PushItemWidth(avail_x);
+		bool b = InputText(label_id, buf, buf_len);
+		PopItemWidth();
+		return b;
+	}
+
     // This SplitterBehavior is an alternative version of the one posted on Dear ImGui github:
     //    https://github.com/ocornut/imgui/issues/319#issuecomment-345795629
     // This new version fits my need more.
