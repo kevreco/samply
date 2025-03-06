@@ -103,6 +103,11 @@ bool process_run_sync(process* p)
 
 bool process_is_running(process* p)
 {
+	if (!p->process_handle)
+	{
+		return false;
+	}
+
 	bool terminated = WaitForSingleObject(p->process_handle, 0) == WAIT_OBJECT_0;
 	return !terminated;
 }
