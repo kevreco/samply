@@ -106,12 +106,11 @@ bool gui::open_file(strv filepath)
 
 void gui::jump_to_file(strv filepath, size_t line)
 {
-    if (!strv_equals(current_opened_filepath, filepath))
+    // Close previous file, and open the new one.
+    // Does this even if it's the same file in case the file changed.
+    if (!open_file(filepath))
     {
-        if (!open_file(filepath))
-        {
-            return;
-        }
+        return;
     }
 
     text_viewer.request_scroll_to_line_number(line);
