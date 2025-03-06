@@ -80,6 +80,7 @@ private:
 	void show_main_window();
 	void display_main_window_header();
 	void display_main_window_body();
+	void display_main_window_footer();
 
 	//
 	// Main Window - Report Tab

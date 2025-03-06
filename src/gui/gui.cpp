@@ -226,6 +226,8 @@ void gui::show_main_window()
         ImGui::Spacing();
 
         display_main_window_body();
+
+        display_main_window_footer();
     }
 
     ImGui::End();
@@ -272,6 +274,35 @@ void gui::display_main_window_body()
     }
 
     ImGui::PopStyleVar();
+}
+
+void gui::display_main_window_footer()
+{
+    bool item_before = false;
+
+    // Display message if sampler is running.
+    if (sampler_is_running(sampler))
+    {
+        ImGui::TextColored(ImGui::GetStyleColorVec4(ImGuiCol_PlotHistogram), "Sampler is running...");
+        item_before = true;
+    }
+
+    // Display opened file name.
+    if (current_opened_filepath.size)
+    {
+        if (item_before)
+        {
+            ImGui::SameLine();
+            ImGui::Text("|");
+            ImGui::SameLine();
+        }
+
+        ImGui::Text(STRV_FMT, STRV_ARG(path_get_last_segment(current_opened_filepath)));
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        {
+            ImGui::SetTooltip(STRV_FMT, STRV_ARG(current_opened_filepath));
+        }
+    }
 }
 
 void gui::show_report_tab()
