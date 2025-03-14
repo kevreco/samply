@@ -79,7 +79,7 @@ bool gui::open_file(strv filepath)
     // Open new file
     if (!file_mapper_open(&file_mapper, &current_file, filepath))
     {
-        text_viewer.set_text(tv::string_view(could_not_open.data, could_not_open.size));
+        text_viewer.set_text(tv::string_view(could_not_open.data, (int)could_not_open.size));
 
         return false;
     }
@@ -90,7 +90,7 @@ bool gui::open_file(strv filepath)
     size_t record_count = report->records.size;
     records_of_current_file = record_range_for_file(records, record_count, filepath);
 
-    tv::string_view content_view = tv::string_view(current_file.view.data, current_file.view.size);
+    tv::string_view content_view = tv::string_view(current_file.view.data, (int)current_file.view.size);
     text_viewer.set_text(content_view);
 
     return true;
@@ -100,7 +100,7 @@ void gui::close_current_file()
 {
     static strv empty = STRV("");
 
-    text_viewer.set_text(tv::string_view(empty.data, empty.size));
+    text_viewer.set_text(tv::string_view(empty.data, (int)empty.size));
 
     // Close previous file
     if (readonly_file_is_opened(&current_file))
@@ -126,7 +126,7 @@ void gui::jump_to_file(strv filepath, size_t line)
         return;
     }
 
-    text_viewer.request_scroll_to_line_number(line);
+    text_viewer.request_scroll_to_line_number((int)line);
 }
 
 void gui::set_command_line_text(strv command_line)
