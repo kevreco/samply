@@ -60,7 +60,10 @@ struct gui {
 	int main();
 
 	bool open_file(strv filepath);
-	
+	void close_current_file();
+
+	void clear();
+
 	// Open the specified file if it's not already opened and jump to the specified line.
 	void jump_to_file(strv filepath, size_t line);
 

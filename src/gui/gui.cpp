@@ -72,17 +72,9 @@ int gui::main()
 
 bool gui::open_file(strv filepath)
 {
-    static strv no_file = STRV("No file displayed");
     static strv could_not_open = STRV("Could not open file.");
 
-    text_viewer.set_text(tv::string_view(no_file.data, no_file.size));
-
-    // Close previous file
-    if (readonly_file_is_opened(&current_file))
-    {
-        file_mapper_close(&file_mapper, &current_file);
-        readonly_file_init(&current_file);
-    }
+    close_current_file();
 
     // Open new file
     if (!file_mapper_open(&file_mapper, &current_file, filepath))
@@ -102,6 +94,27 @@ bool gui::open_file(strv filepath)
     text_viewer.set_text(content_view);
 
     return true;
+}
+
+void gui::close_current_file()
+{
+    static strv empty = STRV("");
+
+    text_viewer.set_text(tv::string_view(empty.data, empty.size));
+
+    // Close previous file
+    if (readonly_file_is_opened(&current_file))
+    {
+        file_mapper_close(&file_mapper, &current_file);
+        readonly_file_init(&current_file);
+    }
+
+    current_opened_filepath = empty;
+}
+
+void gui::clear()
+{
+    close_current_file();
 }
 
 void gui::jump_to_file(strv filepath, size_t line)
@@ -270,6 +283,9 @@ void gui::display_main_window_header()
 
     if (run_pressed)
     {
+        /* Clear view. */
+        clear();
+
         strv s = strv_make_from(command_line_buffer, strlen(command_line_buffer));
         process_init_with_strv(&process, s);
         process_run_async(&process);
