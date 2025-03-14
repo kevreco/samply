@@ -15,6 +15,10 @@ bool args_are_valid(cmd_args args)
 void process_init(process* p)
 {
 	memset(p, 0, sizeof(process));
+
+#if _WIN32
+	p->file_name_buffer = (buffer_char_type*)SMP_MALLOC(SMP_MAX_PATH_BYTE_BUFFER_SIZE);
+#endif
 }
 
 bool process_init_with_args(process* p, cmd_args args)
@@ -28,6 +32,8 @@ bool process_init_with_args(process* p, cmd_args args)
 
 	p->args = args;
 
+	p->created = true;
+
 	return true;
 }
 
@@ -40,16 +46,20 @@ bool process_init_with_strv(process* p, strv str)
 		return false;
 	}
 	
-	samply_convert_utf8_to_wchar(p->file_buffer, MAX_FILE_BUFFER_SIZE, str);
+	samply_convert_utf8_to_wchar(p->file_name_buffer, SMP_MAX_PATH_WCHAR_BUFFER_SIZE, str);
 
-	p->args = p->file_buffer;
+	p->args = p->file_name_buffer;
+	
+	p->created = true;
 
 	return true;
 }
 
 void process_destroy(process* p)
 {
+
 #if _WIN32
+	SMP_FREE(p->file_name_buffer);
 	CloseHandle(p->process_handle);
 	CloseHandle(p->thread_handle);
 #else
@@ -71,7 +81,7 @@ bool process_run_async(process* p)
 		NULL,    /* lpProcessAttributes */
 		NULL,    /* lpThreadAttributes */
 		FALSE,   /* bInheritHandles */
-		0,       /* dwCreationFlags */
+		CREATE_SUSPENDED, /* dwCreationFlags */
 		NULL,    /* lpEnvironment */
 		NULL,    /* lpCurrentDirectory */
 		&si,     /* lpStartupInfo */
@@ -115,6 +125,21 @@ bool process_run_sync(process* p)
 {
 	return process_run_async(p)
 		&& process_wait(p);
+}
+
+void process_resume(process* p)
+{
+	DWORD ignore;
+	ignore = ResumeThread(p->thread_handle);
+}
+
+void process_kill_if_created(process* p)
+{
+	if (p->created)
+	{
+		BOOL ignore;
+		ignore = TerminateProcess(p->process_handle, 1);
+	}
 }
 
 bool process_is_running(process* p)

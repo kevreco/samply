@@ -23,32 +23,117 @@ void symbol_manager_init(symbol_manager* m, struct string_store* s)
 	// The buffer for PSYMBOL_INFO must be large enough to contain the large symbol name.
 	// However, when I use the example provided the buffer is not large enough
 	// so I rounded up to 4096 and everything is working fine now.
-	m->symbol_buffer = malloc(4 * 1024);
+	m->symbol_buffer = SMP_MALLOC(SMP_MAX_PATH_BYTE_BUFFER_SIZE);
 #endif
 }
 
 void symbol_manager_destroy(symbol_manager* m)
 {
-	free(m->symbol_buffer);
+	SMP_FREE(m->symbol_buffer);
 }
 
-void symbol_manager_load(symbol_manager* m, handle process_handle)
+#if _WIN32
+static inline const wchar_t* wcsrchr_s(const wchar_t* str, const size_t len, const wchar_t c)
+{
+	for (const wchar_t* cursor = str + len; cursor >= str; cursor -= 1) {
+		if (cursor[0] == c) {
+			return cursor;
+		}
+	}
+	return NULL;
+}
+
+#endif
+
+void symbol_manager_prepare_for_load(symbol_manager* m, handle process_handle)
+{
+	(void)m;
+#if _WIN32
+	/* Try to wait for the process to be initialized in order to properly load symbols.
+	We don't care about the result. */
+	DWORD ignore;
+	ignore = WaitForInputIdle(process_handle, INFINITE);
+#else
+	(void)process_handle;
+#endif
+}
+
+bool symbol_manager_load(symbol_manager* m, handle process_handle)
 {
 #if _WIN32
 
-	SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES);
+	SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES | SYMOPT_DEBUG);
 
 	if (m->initialized)
 	{
 		log_error("Symbol already initialized, this must be done only once. %d", process_handle);
-		return;
+		return false;
 	}
 
-	if (!SymInitialize(process_handle, NULL, TRUE))
+	/* Don't invade the process right now, SymRefreshModuleList will do it later.
+	   Module refresh is done once the search paths are setup.
+	*/
+	bool fInvadeProcess = false;
+
+	if (!SymInitialize(process_handle, NULL, fInvadeProcess))
 	{
-		/* @TODO Get string from GetLastError and display it. */
 		log_error("Could not initialize symbols: %d", process_handle);
-		return;
+		return false;
+	}
+
+	wchar_t* buffer_begin = (wchar_t*)m->symbol_buffer;
+	wchar_t* buffer = (wchar_t*)m->symbol_buffer;
+	memset(buffer, 0, SMP_MAX_PATH_BYTE_BUFFER_SIZE);
+
+	DWORD remaining_size = SMP_MAX_PATH_WCHAR_BUFFER_SIZE;
+
+	/* Return the length of the path, or 0 */
+	DWORD path_len = GetEnvironmentVariableW(L"_NT_SYMBOL_PATH", buffer, remaining_size);
+
+	/* Adjust buffer */
+	buffer += path_len;
+	remaining_size -= path_len;
+	
+	/* Add separator in case the path was found. */
+	if (path_len)
+	{
+		buffer[path_len] = L';';
+		buffer += 1;
+		remaining_size -= 1;
+	}
+
+	/* Get directory path of the running app. */
+	DWORD size = remaining_size;
+	if (!QueryFullProcessImageNameW(process_handle, 0, buffer, &size))
+	{
+		log_warning("QueryFullProcessImageNameW failed: %d", GetLastError());
+	}
+	/* Set the symbol search path after SymInitialize */
+	else 
+	{
+		buffer += size;
+		remaining_size -= size;
+		
+		/* Get last directory separator to guess the shrink the path and make it */
+		wchar_t* buf_ptr = (wchar_t*)wcsrchr_s(buffer_begin, buffer - buffer_begin, '\\');
+		if (buf_ptr != NULL)
+		{
+			buf_ptr[0] = '\0';
+		}
+
+		if (!SymSetSearchPathW(process_handle, buffer_begin))
+		{
+			log_warning("SymSetSearchPathW failed: %d", GetLastError());
+		}
+	}
+
+	/* Not sure why but SymRefreshModuleList sometime fails and placing this Sleep fixed the issue... */
+	Sleep(1);
+
+	if (!SymRefreshModuleList(process_handle))
+	{
+		log_warning("SymRefreshModuleList  failed: %ul", GetLastError());
+		return false;
 	}
 
 	m->initialized = true;
@@ -57,6 +142,8 @@ void symbol_manager_load(symbol_manager* m, handle process_handle)
 #else
 #error "symbol_manager_load not implemented yet"
 #endif
+
+	return true;
 }
 
 void symbol_manager_unload(symbol_manager* m)

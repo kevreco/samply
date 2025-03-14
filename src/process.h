@@ -22,8 +22,8 @@ typedef wchar_t* cmd_args;
 typedef HANDLE handle;
 typedef DWORD exit_code;
 typedef DWORD64 address;
-#define MAX_FILE_BUFFER_SIZE (1024 * 8)
-typedef wchar_t file_buffer[MAX_FILE_BUFFER_SIZE];
+typedef wchar_t buffer_char_type;
+
 #else /* UNIX */
 
 typedef cmd_args cmd_args;
@@ -46,8 +46,9 @@ struct process {
 	handle thread_handle;
 	exit_code exit_code;
 #if _WIN32
-	file_buffer file_buffer;
+	buffer_char_type* file_name_buffer;
 #endif
+	bool created; /* Was created by Samply. */
 };
 
 void process_init(process* p);
@@ -58,6 +59,11 @@ void process_destroy(process* p);
 bool process_run_async(process* p);
 bool process_wait(process* p);
 bool process_run_sync(process* p);
+
+/* Since process are created suspended with need to resume them before sampling. */
+void process_resume(process* p);
+/* Kill created process in case symbols are not loaded. */
+void process_kill_if_created(process* p);
 
 bool process_is_running(process* p);
 

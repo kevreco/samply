@@ -24,8 +24,9 @@ struct symbol_manager {
 void symbol_manager_init(symbol_manager* m, struct string_store* s);
 void symbol_manager_destroy(symbol_manager* m);
 
+void symbol_manager_prepare_for_load(symbol_manager* m, handle process_handle);
 /* Load symbols of specified process. */
-void symbol_manager_load(symbol_manager* m, handle process_handle);
+bool symbol_manager_load(symbol_manager* m, handle process_handle);
 /* Unload symbols of specified process. */
 void symbol_manager_unload(symbol_manager* m);
 

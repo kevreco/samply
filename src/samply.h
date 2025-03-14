@@ -18,6 +18,23 @@
 #define SMP_ASSERT   assert
 #endif
 
+#ifndef SMP_MALLOC
+#include <stdlib.h>
+#define SMP_MALLOC malloc
+#endif
+
+#ifndef SMP_FREE
+#include <stdlib.h>
+#define SMP_FREE free
+#endif
+
+#ifdef _WIN32
+#define SMP_MAX_PATH_BYTE_BUFFER_SIZE (1024 * sizeof(wchar_t))
+#define SMP_MAX_PATH_WCHAR_BUFFER_SIZE (SMP_MAX_PATH_BYTE_BUFFER_SIZE / (sizeof(wchar_t)))
+#else
+#define SMP_MAX_PATH_BYTE_BUFFER_SIZE (1024)
+#endif
+
 #ifdef _MSC_VER
 #define SMP_CDECL __cdecl
 #else

@@ -134,34 +134,36 @@ static int sample_thread_procedure(sampler* s)
 			{
 				process process = cmd->process;
 
-				// Try to waif for the process to be initialized in order to properly load symbols.
-				// We don't care about the result actually.
-				WaitForInputIdle(process.process_handle, INFINITE);
+				/* Process created from Samply are suspended, we resume it.
+				   It's harmless to already running process. */
+				process_resume(&process);
 
-				int nanoseconds = 1000000;
-				thread_timer_wait(&s->sleeper, nanoseconds);
+				symbol_manager_prepare_for_load(&s->mgr, process.process_handle);
 
 				/* Load process symbols. */
-				symbol_manager_load(&s->mgr, process.process_handle);
-
-				enum sample_result status_result = sample_status_result_NONE;
-
-				/* Get sample while the status is "success". */
-				while (!s->must_end_sampling
-					&& process_is_running(&process)
-					&& (status_result = get_sample(s, &process))
-					&& status_result == sample_status_result_SUCCESS)
+				if (symbol_manager_load(&s->mgr, process.process_handle))
 				{
-					/* Continue */
-				}
+					enum sample_result status_result = sample_status_result_NONE;
 
-				symbol_manager_unload(&s->mgr);
-				/* @TODO check if it's necessary. */
-				thread_timer_wait(&s->sleeper, nanoseconds);
+					/* Get sample while the status is "success". */
+					while (!s->must_end_sampling
+						&& process_is_running(&process)
+						&& (status_result = get_sample(s, &process))
+						&& status_result == sample_status_result_SUCCESS)
+					{
+						/* Continue */
+					}
+
+					symbol_manager_unload(&s->mgr);
+				}
+				else
+				{
+					/* Since we can't load symbols there is no reason to let the created process run. */
+					process_kill_if_created(&process);
+				}
 
 				/* Sampling is not running anymore. */
 				s->is_running = false;
-
 				break;
 			}
 			}
