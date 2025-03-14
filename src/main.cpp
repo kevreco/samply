@@ -10,10 +10,11 @@
 #define LITERAL_STREQUAL(str, literal_str) (strncmp(str, literal_str, sizeof(literal_str) - 1) == 0)
 
 cmd_args get_args_to_run(char** argv);
-bool run_process(process* p, sampler* s, report* report);
+bool run_process(process* p, sampler* s);
 
 int main(int argc, char** argv)
 {
+    (void)argc;
     sampler s;
     sampler_init(&s);
     report report;
@@ -21,6 +22,19 @@ int main(int argc, char** argv)
 
     int exit_code = 0;
     bool no_subprocess_error = true;
+
+    bool show_gui = true;
+
+    // Parse arguments.
+    while (argv && *argv)
+    {
+        if (LITERAL_STREQUAL(*argv, "--no-gui"))
+        {
+            show_gui = false;
+        }
+        argv += 1;
+    }
+
     // If the command line contains "--run" everything after will
     // run from a child process.
     // Example:
@@ -34,23 +48,40 @@ int main(int argc, char** argv)
         process p;
         if (process_init_with_args(&p, args))
         {
-            no_subprocess_error = run_process(&p, &s, &report);
+            no_subprocess_error = run_process(&p, &s);
 
+            /* Report */
+            {
+                /* Load report from sampler. */
+                report_load_from_sampler(&report, &s);
+
+                /* If GUI is displayed no need to display thge report in the console. */
+                if (!show_gui)
+                {
+                    /* Display report in std output. */
+                    report_print_to_file(&report, stdout);
+
+/* To test if save/load from/to a file is working. */
+#if 0 
+
+                    /* Re-display data in std output to check if they actually match. */
+                    if (!report_save_to_filepath(&report, "test.bin"))
+                    {
+                        return false;
+                    }
+
+                    if (!report_load_from_filepath(&report, "test.bin"))
+                    {
+                        return false;
+                    }
+                    /* Should display the same text as the first "print_to_file" above. */
+                    report_print_to_file(&report, stdout);
+
+#endif
+                }
+            }
             process_destroy(&p);
         }
-    }
-
-    (void)argc;
-    bool show_gui = true;
-
-    // Parse arguments.
-    while (argv && *argv)
-    {
-        if (LITERAL_STREQUAL(*argv, "--no-gui"))
-        {
-            show_gui = false;
-        }
-        argv += 1;
     }
 
     if (show_gui)
@@ -101,7 +132,7 @@ cmd_args get_args_to_run(char** argv)
 #error "get_args_to_run not supported yet"
 #endif
 
-bool run_process(process* p, sampler* s, report* report)
+bool run_process(process* p, sampler* s)
 {
     if (!process_run_async(p))
     {
@@ -115,28 +146,6 @@ bool run_process(process* p, sampler* s, report* report)
         return false;
     }
     sampler_stop(s);
-    /* Load report from sampler. */
-    report_load_from_sampler(report, s);
-
-    /* Display report in std output. */
-    report_print_to_file(report, stdout);
-
-#if 0 /* To test if save/load from/to a file is working. */
-
-    /* Re-display data in std output to check if they actually match. */
-    if (!report_save_to_filepath(report, "test.bin"))
-    {
-        return false;
-    }
-
-    if (!report_load_from_filepath(report, "test.bin"))
-    {
-        return false;
-    }
-    /* Should display the same text as the first "print_to_file" above. */
-    report_print_to_file(report, stdout);
-
-#endif
-
+   
     return true;
 }
