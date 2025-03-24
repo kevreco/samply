@@ -5,8 +5,8 @@
 #include "stdbool.h" /* bool */
 
 #include "strv.h"
-#include "darrT.h"
-#include "multi_mapT.h"
+#include "darr.h"
+#include "multi_map.h"
 #include "arena_alloc.h"
 #include "sampler.h" /* record */
 #include "string_store.h"
@@ -25,9 +25,9 @@ struct summed_record {
 	size_t counter;
 };
 
-typedef darrT(record) records;
-typedef multi_mapT(record) sorted_records;
-typedef darrT(summed_record) summed_records;
+typedef darr(record) records;
+typedef multi_map(record) sorted_records;
+typedef darr(summed_record) summed_records;
 
 typedef struct report report;
 struct report {

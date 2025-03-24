@@ -111,6 +111,9 @@
     <ClCompile Include="src\utils\log.c">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\samply.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="samply.ico">
@@ -133,9 +136,6 @@
     <ClInclude Include="src\3rdparty\arena_alloc.h">
       <Filter>Header Files\3rdparty</Filter>
     </ClInclude>
-    <ClInclude Include="src\3rdparty\darrT.h">
-      <Filter>Header Files\3rdparty</Filter>
-    </ClInclude>
     <ClInclude Include="src\3rdparty\strv.h">
       <Filter>Header Files\3rdparty</Filter>
     </ClInclude>
@@ -151,9 +151,6 @@
     <ClInclude Include="src\3rdparty\text_viewer\text_viewer.hpp">
       <Filter>Header Files\3rdparty\text_viewer</Filter>
     </ClInclude>
-    <ClInclude Include="src\3rdparty\multi_mapT.h">
-      <Filter>Header Files\3rdparty</Filter>
-    </ClInclude>
     <ClInclude Include="src\3rdparty\imgui\imgui_plus_extensions.h">
       <Filter>Header Files\3rdparty\imgui</Filter>
     </ClInclude>
@@ -168,6 +165,12 @@
     </ClInclude>
     <ClInclude Include="src\3rdparty\thread\thread.h">
       <Filter>Header Files\3rdparty\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rdparty\darr.h">
+      <Filter>Header Files\3rdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="src\3rdparty\multi_map.h">
+      <Filter>Header Files\3rdparty</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

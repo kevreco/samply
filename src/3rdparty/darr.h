@@ -1,30 +1,30 @@
-#ifndef DARRT_H
-#define DARRT_H
+#ifndef DARR_H
+#define DARR_H
 
 /*
-   darrT is a more or less type safe dynamic array.
-   it's lightweigt alternative to github.com/kevreco/darrT.h
+   darr is a more or less type safe dynamic array.
+   This is an alternative implementation to github.com/kevreco/re.lib/darrT.h
    ... using macro. 
 
    Example of use:
 
        void main() {
        
-           darrT(int) items;
-           darrT_init(&items);
+           darr(int) items;
+           darr_init(&items);
        
-           darrT_push_back(&item, 1);
+           darr_push_back(&item, 1);
        }
 
-   Macros with double underscores like "darrT__to_any" are not meant to be used.
+   Macros and method with double underscores like "darr__to_any" are not meant to be used.
 */
 
-#include <string.h> /* memmove, memcpy */
+#include <string.h>  /* memmove, memcpy */
 #include <stdbool.h> /* bool */
 
 #ifndef DARR_ASSERT
 #include <assert.h>
-#define DARR_ASSERT   assert
+#define DARR_ASSERT assert
 #endif
 
 #ifndef DARR_MALLOC
@@ -48,14 +48,14 @@ extern "C" {
 
 #define DARR_DEFAULT_CAPACITY 64
 
-#define darrT(type)      \
+#define darr(type)      \
     struct {             \
         type* data;      \
         size_t size;     \
         size_t capacity; \
     }
 
-typedef darrT(char) darr_any;
+typedef darr(char) darr_any;
 typedef bool(*darr_predicate_t)(void* left, void* right);
 
 /* Initialize array. No allocation performed. */
@@ -99,7 +99,7 @@ static inline void darr_any_insert_one_sorted(darr_any* arr, size_t sizeof_value
 static inline size_t darr_any_get_or_insert(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less);
 
 /* Use duck typing to enforce a kind of compile-time safety. */
-#define darrT__ducktype_equals_to_any(arr) \
+#define darr__ducktype_equals_to_any(arr) \
 do { \
     darr_any ident = { \
        .data = (char*)(arr)->data, \
@@ -111,68 +111,68 @@ do { \
     DARR_ASSERT(sizeof(size_t) == sizeof((arr)->capacity) && "DARR TYPE ERROR (capacity)"); \
 } while(0)
 
-/* Convert darrT to darr_any. */
-#define darrT__to_any(ident, arr)       \
-    darrT__ducktype_equals_to_any(arr); \
+/* Convert darr to darr_any. */
+#define darr__to_any(ident, arr)       \
+    darr__ducktype_equals_to_any(arr); \
     darr_any* ident = (darr_any*)(arr)  \
 
-#define darrT_sizeof_value(arr) sizeof((arr)->data[0])
+#define darr_sizeof_value(arr) sizeof((arr)->data[0])
 
-#define darrT_init(arr) \
+#define darr_init(arr) \
 do { \
-    darrT__to_any(any, arr); \
+    darr__to_any(any, arr); \
     darr_any_init(any); \
 }  while(0)
 
-#define darrT_destroy(arr) \
+#define darr_destroy(arr) \
 do { \
-    darrT__to_any(any, arr); \
+    darr__to_any(any, arr); \
     darr_any_destroy(any); \
 }  while(0)
 
-#define darrT_clear(arr) \
+#define darr_clear(arr) \
 do { \
-    darrT__to_any(any, arr); \
+    darr__to_any(any, arr); \
     darr_any_clear(any); \
 }  while(0)
 
-#define darrT_insert_many(arr, index, values_ptr, count) \
+#define darr_insert_many(arr, index, values_ptr, count) \
 do { \
-    darrT__to_any(any, arr); \
-    darr_any_insert_many(any, darrT_sizeof_value(arr), (index), (values_ptr), (count)); \
+    darr__to_any(any, arr); \
+    darr_any_insert_many(any, darr_sizeof_value(arr), (index), (values_ptr), (count)); \
 }  while(0)
 
-#define darrT_push_back_many(type, arr, values_ptr, count) \
+#define darr_push_back_many(type, arr, values_ptr, count) \
 do { \
-    darrT__to_any(any, arr); \
-    darr_any_insert_many(any, darrT_sizeof_value(arr), (arr)->size, (values_ptr), (count)); \
+    darr__to_any(any, arr); \
+    darr_any_insert_many(any, darr_sizeof_value(arr), (arr)->size, (values_ptr), (count)); \
 } while (0)
 
-#define darrT_push_back(arr, value)  \
+#define darr_push_back(arr, value)  \
 do { \
-    darrT__to_any(any, arr); \
-    darr_any_insert_many_space(any, darrT_sizeof_value(arr), (arr)->size, 1); \
+    darr__to_any(any, arr); \
+    darr_any_insert_many_space(any, darr_sizeof_value(arr), (arr)->size, 1); \
     (arr)->data[(arr)->size-1] = (value); \
 } while (0)
 
-#define darrT_at(arr, i) ((arr)->data[i]);
+#define darr_at(arr, i) ((arr)->data[i]);
 
-#define darrT_insert_one_sorted(arr, value, less) \
+#define darr_insert_one_sorted(arr, value, less) \
 do { \
-    darrT__to_any(any, arr); \
-    darr_any_insert_one_sorted(any, darrT_sizeof_value(arr), (value), (less)); \
+    darr__to_any(any, arr); \
+    darr_any_insert_one_sorted(any, darr_sizeof_value(arr), (value), (less)); \
 } while (0)
 
-#define darrT_ensure_space(arr, count) \
+#define darr_ensure_space(arr, count) \
 do { \
-    darrT__to_any(any, arr); \
-    darr_any_ensure_space(any, darrT_sizeof_value(arr), (count)); \
+    darr__to_any(any, arr); \
+    darr_any_ensure_space(any, darr_sizeof_value(arr), (count)); \
 } while (0)
 
-#define darrT_get_or_insert(arr, value, value_ptr, less) \
+#define darr_get_or_insert(arr, value, value_ptr, less) \
 do { \
-    darrT__to_any(any, arr); \
-    size_t index = darr_any_get_or_insert(any, darrT_sizeof_value(arr), &(value), less); \
+    darr__to_any(any, arr); \
+    size_t index = darr_any_get_or_insert(any, darr_sizeof_value(arr), &(value), less); \
     (value_ptr) = (arr)->data + index; \
 } while(0)
 
@@ -332,4 +332,4 @@ static inline size_t darr_any_get_or_insert(darr_any* arr, size_t sizeof_value, 
 }
 #endif
 
-#endif /* DARRT_H */
+#endif /* darr_H */

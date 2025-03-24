@@ -4,7 +4,7 @@
 #include "stdbool.h"
 
 #include "thread.h"
-#include "darrT.h"
+#include "darr.h"
 #include "insert_only_ht.h"
 
 #include "symbol_manager.h"

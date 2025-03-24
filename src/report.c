@@ -67,8 +67,8 @@ void report_init(report* r)
 {
 	memset(r, 0, sizeof(report));
 
-	darrT_init(&r->summary_by_count);
-	multi_mapT_init(&r->records);
+	darr_init(&r->summary_by_count);
+	multi_map_init(&r->records);
 
 	size_t min_chunk_capacity = 4 * 1024;
 	re_arena_init(&r->arena, min_chunk_capacity);
@@ -78,9 +78,9 @@ void report_init(report* r)
 
 void report_destroy(report* r)
 {
-	darrT_destroy(&r->summary_by_count);
+	darr_destroy(&r->summary_by_count);
 
-	multi_mapT_init(&r->records);
+	multi_map_init(&r->records);
 
 	re_arena_destroy(&r->arena);
 
@@ -89,9 +89,9 @@ void report_destroy(report* r)
 
 void report_clear(report* r)
 {
-	darrT_clear(&r->summary_by_count);
+	darr_clear(&r->summary_by_count);
 	
-	multi_mapT_clear(&r->records);
+	multi_map_clear(&r->records);
 
 	re_arena_clear(&r->arena);
 }
@@ -109,7 +109,7 @@ void report_print_to_file(report* r, FILE* f)
 	/* Print summary */
 	for (int i = 0; i < r->summary_by_count.size; i += 1)
 	{
-		summed_record item = darrT_at(&r->summary_by_count, i);
+		summed_record item = r->summary_by_count.data[i];
 		percent = (double)item.counter / count_f;
 		printf("%.2f" "\t" "%zu" "\t" STRV_FMT "\n", percent, item.counter, STRV_ARG(item.symbol_name));
 	}
@@ -249,7 +249,7 @@ void report_load_from_file(report* r, FILE* f)
 		/* 8) closest line number */
 		read_uint64(f, &item.closest_line_number);
 		
-		darrT_push_back(&r->summary_by_count, item);
+		darr_push_back(&r->summary_by_count, item);
 	}
 }
 
@@ -319,7 +319,7 @@ static bool record_predicate_less(const record* left, const record* right)
 static void upsert_record(report* r, record* rec)
 {
 	record line = *rec;
-	size_t index = multip_mapT_lower_bound(&r->records, line, record_predicate_less);
+	size_t index = multip_map_lower_bound(&r->records, line, record_predicate_less);
 
 	/* Item has been found if the index is within the array, and the item queried is not equal to the item at the index*/
 	bool found = index != r->records.size
@@ -332,7 +332,7 @@ static void upsert_record(report* r, record* rec)
 	}
 	else
 	{
-		darrT_insert_many(&r->records, index, &line, 1);
+		darr_insert_many(&r->records, index, &line, 1);
 	}
 }
 
@@ -346,7 +346,7 @@ static void update_summary_with(report* r, record* rec)
 	init.closest_line_number = rec->line_number;
 
 	summed_record* result = 0;
-	darrT_get_or_insert(&r->summary_by_count, init, result, summed_record_by_count_predicate_less);
+	darr_get_or_insert(&r->summary_by_count, init, result, summed_record_by_count_predicate_less);
 
 	// Update closest line number
 	if (rec->line_number < result->closest_line_number)

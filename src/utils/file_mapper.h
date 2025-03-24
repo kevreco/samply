@@ -1,7 +1,7 @@
 #ifndef SAMPLY_FILE_MAPPER_H
 #define SAMPLY_FILE_MAPPER_H
 
-#include "darrT.h"
+#include "darr.h"
 #include "strv.h"
 #include "wchar.h"
 
@@ -23,9 +23,9 @@ typedef struct file_mapper file_mapper;
 struct file_mapper {
 
 #ifdef _WIN32
-    darrT(wchar_t) chars;
+    darr(wchar_t) chars;
 #else
-    darrT(char) chars;
+    darr(char) chars;
 #endif
 
 };

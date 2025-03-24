@@ -2,7 +2,7 @@
 #define SAMPLY_SYMBOL_MANAGER_H
 
 #include "arena_alloc.h" /* re_arena */
-#include "darrT.h"
+#include "darr.h"
 #include "strv.h" /* strv */
 
 #include "process.h" /* For handle type. */

@@ -8,12 +8,12 @@ void file_mapper_init(file_mapper* fm)
 {
     memset(fm, 0, sizeof(file_mapper));
 
-    darrT_init(&fm->chars);
+    darr_init(&fm->chars);
 }
 
 void file_mapper_destroy(file_mapper* fm)
 {
-    darrT_destroy(&fm->chars);
+    darr_destroy(&fm->chars);
 }
 
 #ifdef _WIN32
@@ -24,7 +24,7 @@ static int convert_utf8_to_wchar(file_mapper* fm, strv chars)
     int result = 0;
 
     /* Ensure the buffer is big enough. */
-    darrT_ensure_space(&fm->chars, len + 1);
+    darr_ensure_space(&fm->chars, len + 1);
 
     if (len != 0)
     {
