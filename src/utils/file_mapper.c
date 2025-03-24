@@ -24,7 +24,7 @@ static int convert_utf8_to_wchar(file_mapper* fm, strv chars)
     int result = 0;
 
     /* Ensure the buffer is big enough. */
-    darrT_ensure_space(wchar_t, &fm->chars, len + 1);
+    darrT_ensure_space(&fm->chars, len + 1);
 
     if (len != 0)
     {

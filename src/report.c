@@ -249,7 +249,7 @@ void report_load_from_file(report* r, FILE* f)
 		/* 8) closest line number */
 		read_uint64(f, &item.closest_line_number);
 		
-		darrT_push_back(summed_record , &r->summary_by_count, item);
+		darrT_push_back(&r->summary_by_count, item);
 	}
 }
 
@@ -265,8 +265,8 @@ record_range record_range_for_file(record* records, size_t count, strv filepath)
 	record_range range;
 	record rec = { 0 };
 	rec.source_file = filepath;
-	size_t lower = darr_lower_bound_predicate(records, 0, count, &rec, sizeof(rec), (darr_predicate_t)record_by_file_predicate_less);
-	size_t upper = darr_upper_bound_predicate(records, 0, count, &rec, sizeof(rec), (darr_predicate_t)record_by_file_predicate_less);
+	size_t lower = mem_lower_bound_predicate(records, sizeof(rec), 0, count, &rec, (darr_predicate_t)record_by_file_predicate_less);
+	size_t upper = mem_upper_bound_predicate(records, sizeof(rec), 0, count, &rec, (darr_predicate_t)record_by_file_predicate_less);
 
 	range.begin = records + lower;
 	range.end = records + upper;
@@ -279,8 +279,8 @@ record_range record_range_for_line(record* records, size_t count, size_t line_nu
 	record_range range;
 	record rec = { 0 };
 	rec.line_number = line_number;
-	size_t lower = darr_lower_bound_predicate(records, 0, count, &rec, sizeof(rec), record_by_line_predicate_less);
-	size_t upper = darr_upper_bound_predicate(records, 0, count, &rec, sizeof(rec), record_by_line_predicate_less);
+	size_t lower = mem_lower_bound_predicate(records, sizeof(rec), 0, count, &rec, record_by_line_predicate_less);
+	size_t upper = mem_upper_bound_predicate(records, sizeof(rec), 0, count, &rec, record_by_line_predicate_less);
 
 	range.begin = records + lower;
 	range.end = records + upper;
@@ -332,7 +332,7 @@ static void upsert_record(report* r, record* rec)
 	}
 	else
 	{
-		darrT_insert_many(record, &r->records, index, &line, 1);
+		darrT_insert_many(&r->records, index, &line, 1);
 	}
 }
 
@@ -346,7 +346,7 @@ static void update_summary_with(report* r, record* rec)
 	init.closest_line_number = rec->line_number;
 
 	summed_record* result = 0;
-	darrT_get_or_insert(summed_record , &r->summary_by_count, init, result, summed_record_by_count_predicate_less);
+	darrT_get_or_insert(&r->summary_by_count, init, result, summed_record_by_count_predicate_less);
 
 	// Update closest line number
 	if (rec->line_number < result->closest_line_number)

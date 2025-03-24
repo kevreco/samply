@@ -4,16 +4,42 @@
 /*
    darrT is a more or less type safe dynamic array.
    it's lightweigt alternative to github.com/kevreco/darrT.h
-   ... using macro.
-   Not sure I like it. 
+   ... using macro. 
+
+   Example of use:
+
+       void main() {
+       
+           darrT(int) items;
+           darrT_init(&items);
+       
+           darrT_push_back(&item, 1);
+       }
+
+   Macros with double underscores like "darrT__to_any" are not meant to be used.
 */
 
-#include <stdlib.h>  /* realloc */
+#include <string.h> /* memmove, memcpy */
 #include <stdbool.h> /* bool */
 
 #ifndef DARR_ASSERT
 #include <assert.h>
 #define DARR_ASSERT   assert
+#endif
+
+#ifndef DARR_MALLOC
+#include <stdlib.h>
+#define DARR_MALLOC malloc
+#endif
+
+#ifndef DARR_REALLOC
+#include <stdlib.h>
+#define DARR_REALLOC realloc
+#endif
+
+#ifndef DARR_FREE
+#include <stdlib.h>
+#define DARR_FREE free
 #endif
 
 #if __cplusplus
@@ -28,93 +54,225 @@ extern "C" {
         size_t size;     \
         size_t capacity; \
     }
-    
-typedef darrT(char) darr_void;
+
+typedef darrT(char) darr_any;
 typedef bool(*darr_predicate_t)(void* left, void* right);
 
-#define darrT_init(darr) \
-    do { \
-        memset((darr), 0, sizeof(*(darr))); \
-    } while (0)
+/* Initialize array. No allocation performed. */
+static inline void darr_any_init(darr_any* arr);
 
-#define darrT_destroy(darr) \
-    do { \
-        free((darr)->data); \
-    } while (0)
+/* Destroy array. Deallocate memory if allocated. */
+static inline void darr_any_destroy(darr_any* arr);
 
-#define darrT_clear(darr) \
-    do { \
-        (darr)->size = 0; \
-    } while (0)
+/* Remove items but does not deallocate anythings. */
+static inline void darr_any_clear(darr_any* arr);
+
+/* Create enough space to contains 'count' number of items. */
+static inline void darr_any_ensure_space(darr_any* arr, size_t sizeof_value, size_t count);
 
 /* Insert space at 'index' and increase the size of the array. */
-#define darrT_insert_many_space(type, arr, index, count) \
-do { \
-    size_t count_to_move = (arr)->size - (index); \
-    DARR_ASSERT((arr) != NULL); \
-    DARR_ASSERT((count) != 0); \
-    DARR_ASSERT((index) >= 0); \
-    DARR_ASSERT((index) <= (arr)->size); \
-    size_t sizeof_value = sizeof(*(arr)->data); \
-    darrT_ensure_space(type, (arr), (arr)->size + (count)); \
-    if (count_to_move > 0) \
-    { \
-        memmove((arr)->data + ((index) + (count)), (arr)->data + (index), count_to_move * sizeof_value); \
-    } \
-    (arr)->size += count; \
-} while(0) 
+static inline void darr_any_insert_many_space(darr_any* arr, size_t sizeof_value, size_t index, size_t count);
 
 /* Insert space and then copy then values. */
-#define darrT_insert_many(type, arr, index, values_ptr, count) \
+static inline void darr_any_insert_many(darr_any* arr, size_t sizeof_value, size_t index, void* values_ptr, size_t count);
+
+/* Insert space and then copy one value. */
+static inline void darr_any_insert_one(darr_any* arr, size_t sizeof_value, size_t index, void* value);
+
+/* Equivalent of std::lower_bound.
+   Overload for darr_any. */
+static inline size_t darr_any_lower_bound_predicate(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less);
+
+/* Equivalent of std::upper_bound.
+   Overload for darr_any. */
+static inline size_t darr_any_upper_bound_predicate(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less);
+/* Equivalent of std::lower_bound. */
+static inline size_t mem_lower_bound_predicate(void* data_ptr, size_t sizeof_value, size_t left, size_t right, void* value, darr_predicate_t less);
+/* Equivalent of std::upper_bound. */
+static inline size_t mem_upper_bound_predicate(void* data_ptr, size_t sizeof_value, size_t left, size_t right, void* value, darr_predicate_t less);
+
+/* Assume the array to be sorted.
+   Insert one value at the correct place. */
+static inline void darr_any_insert_one_sorted(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less);
+/* Assume the array to be sorted.
+   Returns index of the already existing value or the inserted value. */
+static inline size_t darr_any_get_or_insert(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less);
+
+/* Use duck typing to enforce a kind of compile-time safety. */
+#define darrT__ducktype_equals_to_any(arr) \
 do { \
-    darrT_insert_many_space(type, arr, index, count); \
-    for(int i = 0; i < (count); i += 1) { \
-        (arr)->data[index + i] = (values_ptr)[i]; \
-    } \
+    darr_any ident = { \
+       .data = (char*)(arr)->data, \
+       .size = (arr)->size,        \
+       .capacity = (arr)->capacity \
+    }; \
+    DARR_ASSERT(sizeof(void*) == sizeof((arr)->data) && "DARR TYPE ERROR (data)"); \
+    DARR_ASSERT(sizeof(size_t) == sizeof((arr)->size) && "DARR TYPE ERROR (size)"); \
+    DARR_ASSERT(sizeof(size_t) == sizeof((arr)->capacity) && "DARR TYPE ERROR (capacity)"); \
+} while(0)
+
+/* Convert darrT to darr_any. */
+#define darrT__to_any(ident, arr)       \
+    darrT__ducktype_equals_to_any(arr); \
+    darr_any* ident = (darr_any*)(arr)  \
+
+#define darrT_sizeof_value(arr) sizeof((arr)->data[0])
+
+#define darrT_init(arr) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_init(any); \
 }  while(0)
 
-/* Insert values at the end of the array. */
+#define darrT_destroy(arr) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_destroy(any); \
+}  while(0)
+
+#define darrT_clear(arr) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_clear(any); \
+}  while(0)
+
+#define darrT_insert_many(arr, index, values_ptr, count) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_insert_many(any, darrT_sizeof_value(arr), (index), (values_ptr), (count)); \
+}  while(0)
+
 #define darrT_push_back_many(type, arr, values_ptr, count) \
-    darrT_insert_many(type, arr, (arr)->size, values_ptr, count)
-
-#define darrT_push_back(type, arr, value)  \
-    do { \
-        darrT_insert_many_space(type, (arr), (arr)->size, 1); \
-        (arr)->data[(arr)->size-1] = (value); \
-    } while (0)
-
-#define darrT_at(darr, i) ((darr)->data[i]);
-
-/* Insert to a sorted array, using a predicate. */
-#define darrT_insert_one_sorted(type, arr, value, less) \
 do { \
-        type v = (value); \
-        size_t index = darr_lower_bound_predicate((arr)->data, 0, (arr)->size, &v, sizeof(*(arr)->data), (less)); \
-        darrT_insert_many(type, (arr), index, &v, 1); \
+    darrT__to_any(any, arr); \
+    darr_any_insert_many(any, darrT_sizeof_value(arr), (arr)->size, (values_ptr), (count)); \
 } while (0)
 
-/* Make enough space. */
-#define darrT_ensure_space(type, arr, count) \
+#define darrT_push_back(arr, value)  \
 do { \
-    if ((arr)->size + (count) > (arr)->capacity) \
-    { \
-        if ((arr)->capacity == 0) \
-        { \
-            (arr)->capacity = DARR_DEFAULT_CAPACITY; \
-        } \
-        while ((arr)->size + (count) > (arr)->capacity) \
-        { \
-            (arr)->capacity *= 2; \
-        } \
-        void* mem = realloc((arr)->data, (arr)->capacity * sizeof(*(arr)->data)); \
-        if (!mem) { free((arr)->data); DARR_ASSERT(0 && "Could not allocated memory."); exit(1); } \
-        (arr)->data = (type*)mem; \
-    } \
+    darrT__to_any(any, arr); \
+    darr_any_insert_many_space(any, darrT_sizeof_value(arr), (arr)->size, 1); \
+    (arr)->data[(arr)->size-1] = (value); \
 } while (0)
 
-inline size_t darr_lower_bound_predicate(void* void_ptr, size_t left, size_t right, void* value, size_t sizeof_value, darr_predicate_t less)
+#define darrT_at(arr, i) ((arr)->data[i]);
+
+#define darrT_insert_one_sorted(arr, value, less) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_insert_one_sorted(any, darrT_sizeof_value(arr), (value), (less)); \
+} while (0)
+
+#define darrT_ensure_space(arr, count) \
+do { \
+    darrT__to_any(any, arr); \
+    darr_any_ensure_space(any, darrT_sizeof_value(arr), (count)); \
+} while (0)
+
+#define darrT_get_or_insert(arr, value, value_ptr, less) \
+do { \
+    darrT__to_any(any, arr); \
+    size_t index = darr_any_get_or_insert(any, darrT_sizeof_value(arr), &(value), less); \
+    (value_ptr) = (arr)->data + index; \
+} while(0)
+
+/*
+------------------------------------------------------------------------------
+Implementation
+------------------------------------------------------------------------------
+*/
+
+static inline void darr_any_init(darr_any* arr)
 {
-    char* ptr = (char*)void_ptr;
+    memset(arr, 0, sizeof(darr_any));
+}
+
+static inline void darr_any_destroy(darr_any* arr)
+{
+    DARR_FREE(arr->data);
+}
+
+static inline void darr_any_clear(darr_any* arr)
+{
+    arr->size = 0;
+}
+
+static inline void darr_any_ensure_space(darr_any* arr, size_t sizeof_value, size_t count)
+{
+    if (arr->size + count > arr->capacity)
+    {
+        if (arr->capacity == 0)
+        {
+            arr->capacity = DARR_DEFAULT_CAPACITY;
+        }
+
+        /* Double capacity if capacity is reached. */
+        while (arr->size + count > arr->capacity)
+        {
+            arr->capacity *= 2;
+        }
+
+        void* mem = DARR_REALLOC(arr->data, arr->capacity * sizeof_value);
+        if (!mem)
+        {
+            free((arr)->data); /* Free old memory. */
+            DARR_ASSERT(0 && "Could not allocated memory.");
+            exit(1);
+        }
+        arr->data = (char*)mem;
+    }
+}
+
+static inline void darr_any_insert_many_space(darr_any* arr, size_t sizeof_value, size_t index, size_t count)
+{
+    size_t count_to_move = arr->size - index;
+    DARR_ASSERT(arr != NULL); 
+    DARR_ASSERT(count != 0);
+    DARR_ASSERT(index >= 0);
+    DARR_ASSERT(index <= arr->size);
+    darr_any_ensure_space(arr, sizeof_value, arr->size + count);
+    if (count_to_move > 0)
+    {
+        memmove(
+            arr->data + ((index + count) * sizeof_value),
+            arr->data + (index * sizeof_value),
+            count_to_move * sizeof_value);
+    }
+    arr->size += count;
+}
+
+static inline void darr_any_insert_many(darr_any* arr, size_t sizeof_value, size_t index, void* values_ptr, size_t count)
+{
+    /* Insert spaces at index. */
+    darr_any_insert_many_space(arr, sizeof_value, index, count);
+    /* Copy values to fillup the spaces. */
+    memcpy(arr->data + (index * sizeof_value), values_ptr, count * sizeof_value);
+}
+
+static inline void darr_any_insert_one(darr_any* arr, size_t sizeof_value, size_t index, void* value)
+{
+    darr_any_insert_many(arr, sizeof_value, index, value, 1);
+}
+
+static inline void darr_any_insert_one_sorted(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less)
+{
+    size_t index = darr_any_lower_bound_predicate(arr, sizeof_value, value, less);
+    darr_any_insert_one(arr, sizeof_value, index, value);
+}
+
+static inline size_t darr_any_lower_bound_predicate(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less)
+{
+    return mem_lower_bound_predicate(arr->data, sizeof_value, 0, arr->size, value, less);
+}
+
+static inline size_t darr_any_upper_bound_predicate(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less)
+{
+    return mem_upper_bound_predicate(arr->data, sizeof_value, 0, arr->size, value, less);
+}
+
+static inline size_t mem_lower_bound_predicate(void* data_ptr, size_t sizeof_value, size_t left, size_t right, void* value, darr_predicate_t less)
+{
+    char* ptr = (char*)data_ptr;
     size_t count = right - left;
     size_t step;
     size_t mid; /* index of the found value */
@@ -135,9 +293,9 @@ inline size_t darr_lower_bound_predicate(void* void_ptr, size_t left, size_t rig
     return left;
 }
 
-inline size_t darr_upper_bound_predicate(void* void_ptr, size_t left, size_t right, void* value, size_t sizeof_value, darr_predicate_t less)
+static inline size_t mem_upper_bound_predicate(void* data_ptr, size_t sizeof_value, size_t left, size_t right, void* value, darr_predicate_t less)
 {
-    char* ptr = (char*)void_ptr;
+    char* ptr = (char*)data_ptr;
     size_t count = right - left;
     size_t step;
     size_t mid; /* index of the found value */
@@ -158,24 +316,17 @@ inline size_t darr_upper_bound_predicate(void* void_ptr, size_t left, size_t rig
     return left;
 }
 
-/* If value already exist, set it to value_ptr.
-   Example:
-
-       Type* result;
-       Type to_insert = { ... }
-       darrT_get_or_insert(arr, to_insert, result, less);
-       // If to_insert did not exist yet it's inserted.
-       // result always contains the new added item or the already existing item.
-*/
-#define darrT_get_or_insert(type, arr, value, value_ptr, less) \
-do { \
-    size_t index = darr_lower_bound_predicate((arr)->data, 0, (arr)->size, &(value), sizeof(*(arr)->data), (less)); \
-    if (index == (arr)->size || (less)(&(value), ((arr)->data + index))) \
-    { \
-        darrT_insert_many(type, (arr), index, &(value), 1); \
-    } \
-    (value_ptr) = (arr)->data + index; \
-} while(0)
+static inline size_t darr_any_get_or_insert(darr_any* arr, size_t sizeof_value, void* value, darr_predicate_t less)
+{
+    size_t index = darr_any_lower_bound_predicate(arr, sizeof_value, value, less);
+    if (index == arr->size  /* End was reached */
+        || less(value, (arr->data + (index * sizeof_value))) /* Found value is not equal to the value in parameter. */
+        )
+    {
+        darr_any_insert_one(arr, sizeof_value, index, value);
+    }
+    return index;
+}
 
 #if __cplusplus
 }
