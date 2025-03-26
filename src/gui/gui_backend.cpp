@@ -25,6 +25,7 @@
 #include "stdio.h"
 
 #include "samply.h"
+#include "utils/log.h"
 
 #define TO_STR(str) L ## str
 #define STR(str) TO_STR(str)
@@ -86,7 +87,7 @@ int gui::show()
     HICON hIcon = (HICON)LoadImage(NULL, icon_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
     if (hIcon == NULL)
     {
-        fprintf(stderr, "Could not load icon: %s\n", icon_name);
+        log_error("Could not load icon: %s", icon_name);
     }
     else
     {
