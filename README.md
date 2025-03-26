@@ -1,6 +1,6 @@
 # samply
 
-(Soon) cross-platform and simple sampling (non-intrusive) profiler.
+(Soon) cross-platform and simple sample-based (and non-intrusive) profiler.
 
 ## CLI - Example
 
@@ -36,14 +36,14 @@ The next step is to display the number/percentage of samples next to each text l
 
 ## TODO
 
-- [./] Display summary in terminal.
-- [./] Display summary in GUI.
-    - [./] Use a table and make it sortable.
-- [./] Create (more or less lightweight) Text Viewer for Dear ImGui.
-- [./] Display detailed result in GUI.
-    - [./] Display source code associated to the specific symbol.
-- [Windows] Use `CREATE_SUSPENDED` and then `ResumeThread` to start be able to sample the program exactly once it starts?
-- Remove .sln file and build with use cb.h
+- ☑ Display summary in terminal.
+- ☑ Display summary in GUI.
+    - ☑ Use a table and make it sortable.
+- ☑ Create (more or less lightweight) Text Viewer for Dear ImGui.
+- ☑ Display detailed result in GUI.
+    - ☑ Display source code associated to the specific symbol.
+- ☑ [Windows] Use `CREATE_SUSPENDED` and then `ResumeThread` to start be able to sample the program exactly once it starts?
+- ☑ Remove .sln file and build with use cb.h
 - Implement Linux version once the Windows version is usable.
 
 ## Why?
