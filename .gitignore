@@ -3,6 +3,7 @@ imgui.ini
 .vs/
 x64/
 *.user
+.build
 # /Samply
 
 # Prerequisites
