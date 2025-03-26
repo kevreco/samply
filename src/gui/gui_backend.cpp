@@ -133,7 +133,7 @@ int gui::show()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     ImGui::ApplyCustomTheme();
-    ImGui::LoadFonts();
+    ImGui::TryLoadCustomFonts();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.

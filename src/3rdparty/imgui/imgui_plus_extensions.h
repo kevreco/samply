@@ -279,11 +279,15 @@ namespace ImGui {
         style.DisabledAlpha               = 0.70f;
     }
 
-	static inline void LoadFonts()
+	static inline void TryLoadCustomFonts()
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImFont* font = io.Fonts->AddFontFromFileTTF(SMP_TEXT_FONT, 16.0f);
-		IM_ASSERT(font != nullptr);
+		if (font)
+		{
+			fprintf(stderr, "Could not custom font: %s\n", SMP_TEXT_FONT);
+			return;
+		}
 		// Merge in icons from Font Awesome
 		static const ImWchar icons_ranges[] = { ICON_MIN_LC, ICON_MAX_16_LC, 0 };
 		ImFontConfig icons_config;
