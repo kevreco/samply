@@ -1,5 +1,7 @@
-#ifndef SAMPLY_GUI_H
-#define SAMPLY_GUI_H
+#ifndef SAMPLY_GUI_HPP
+#define SAMPLY_GUI_HPP
+
+#include "gui_backend.hpp"
 
 #include "text_viewer/text_viewer.hpp"
 
@@ -8,7 +10,7 @@
 
 struct sampler;
 
-struct gui {
+struct gui : gui_backend {
 
 	static const int max_command_line_char = 8191;
 	static const int max_command_line_buffer_char = max_command_line_char + 1;
@@ -51,13 +53,7 @@ struct gui {
 	gui(struct sampler* s, struct report* r);
 	~gui();
 
-	static strv backend_identifier();
-
-	// Return exit code
-	int show();
-
-	// Display our application
-	int main();
+	int show_core();
 
 	bool open_file(strv filepath);
 	void close_current_file();
@@ -99,4 +95,4 @@ private:
 	void show_source_file();
 };
 
-#endif // SAMPLY_GUI_H
+#endif // SAMPLY_GUI_HPP

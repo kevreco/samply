@@ -71,13 +71,13 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
-strv gui::backend_identifier()
+strv gui_backend::identifier()
 {
     static strv id = STRV("Dear ImGui/Win32/OpenGL3");
     return id;
 }
 
-int gui::show()
+int gui_backend::show()
 {
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
@@ -185,7 +185,7 @@ int gui::show()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        exit_code = main();
+        exit_code = show_core();
 
         // Rendering
         ImGui::Render();
