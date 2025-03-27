@@ -1,0 +1,31 @@
+name: builds
+
+on:
+  push:
+    paths-ignore: # Don't build for Markdown file change.
+      - '**.md'
+  pull_request:
+    paths-ignore: # Don't build for Markdown file change.
+      - '**.md'
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          call cb.bat
+  build-linux:
+    if: false  # Skip linux build since there is no functional implementation yet.
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: build
+        shell: bash
+        run: |
+          ./cb.sh
