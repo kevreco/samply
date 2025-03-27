@@ -49,22 +49,25 @@ struct {
     100, 100, 720, 540
 };
 
-// To format wchar_t strings with "tmp_fmt".
-static const int tmp_buffer_MAX = 1024;
-static wchar_t buffer[tmp_buffer_MAX];
-static wchar_t buffer_error[] = L"<error>";
-
 // Data stored per platform window
 struct WGL_WindowData { HDC hDC; };
 
-// Data
-static HGLRC            g_hRC;
-static WGL_WindowData   g_MainWindow;
-static int              g_Width;
-static int              g_Height;
+struct global_data {
+    HGLRC            hRC;
+    WGL_WindowData   MainWindow;
+    int              Width;
+    int              Height;
+
+    // To format wchar_t strings with "tmp_fmt".
+    static const int tmp_buffer_MAX = 1024;
+    wchar_t buffer[tmp_buffer_MAX];
+    const wchar_t* buffer_error = L"<error>";
+};
+
+static global_data g;
 
 // Forward declarations of helper functions
-static wchar_t* tmp_fmt(const wchar_t* fmt, ...);
+static const wchar_t* tmp_fmt(const wchar_t* fmt, ...);
 static bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data);
 static void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
 static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -105,14 +108,14 @@ int gui_backend::show()
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, title, WS_OVERLAPPEDWINDOW, rect.x, rect.y, rect.width, rect.height, nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize OpenGL
-    if (!CreateDeviceWGL(hwnd, &g_MainWindow))
+    if (!CreateDeviceWGL(hwnd, &g.MainWindow))
     {
-        CleanupDeviceWGL(hwnd, &g_MainWindow);
+        CleanupDeviceWGL(hwnd, &g.MainWindow);
         ::DestroyWindow(hwnd);
         ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         return 1;
     }
-    wglMakeCurrent(g_MainWindow.hDC, g_hRC);
+    wglMakeCurrent(g.MainWindow.hDC, g.hRC);
     // Set V-sync
     wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
     wglSwapIntervalEXT(1);
@@ -190,13 +193,13 @@ int gui_backend::show()
 
         // Rendering
         ImGui::Render();
-        glViewport(0, 0, g_Width, g_Height);
+        glViewport(0, 0, g.Width, g.Height);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Present
-        ::SwapBuffers(g_MainWindow.hDC);
+        ::SwapBuffers(g.MainWindow.hDC);
     }
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -209,8 +212,8 @@ int gui_backend::show()
         DestroyIcon(hIcon);
     }
 
-    CleanupDeviceWGL(hwnd, &g_MainWindow);
-    wglDeleteContext(g_hRC);
+    CleanupDeviceWGL(hwnd, &g.MainWindow);
+    wglDeleteContext(g.hRC);
     ::DestroyWindow(hwnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 
@@ -222,16 +225,16 @@ int gui_backend::show()
 // 
 
 // Return buffer_error in case something went wrong.
-static wchar_t* tmp_fmt(const wchar_t* fmt, ...)
+static const wchar_t* tmp_fmt(const wchar_t* fmt, ...)
 {
     va_list valist;
     va_start(valist, fmt);
 
-    HRESULT h = StringCchVPrintfW(buffer, tmp_buffer_MAX, fmt, valist);
+    HRESULT h = StringCchVPrintfW(g.buffer, g.tmp_buffer_MAX, fmt, valist);
 
     va_end(valist);
 
-    return h == S_OK ? buffer : buffer_error;
+    return h == S_OK ? g.buffer : g.buffer_error;
 }
 
 static bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
@@ -252,8 +255,8 @@ static bool CreateDeviceWGL(HWND hWnd, WGL_WindowData* data)
     ::ReleaseDC(hWnd, hDc);
 
     data->hDC = ::GetDC(hWnd);
-    if (!g_hRC)
-        g_hRC = wglCreateContext(data->hDC);
+    if (!g.hRC)
+        g.hRC = wglCreateContext(data->hDC);
     return true;
 }
 
@@ -281,8 +284,8 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         if (wParam != SIZE_MINIMIZED)
         {
-            g_Width = LOWORD(lParam);
-            g_Height = HIWORD(lParam);
+            g.Width = LOWORD(lParam);
+            g.Height = HIWORD(lParam);
         }
         return 0;
     case WM_SYSCOMMAND:
