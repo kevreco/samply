@@ -42,14 +42,14 @@ error "@TODO Handle UNIX-like system"
 struct WGL_WindowData { HDC hDC; };
 
 struct global_data {
-    HGLRC            hRC;
-    WGL_WindowData   MainWindow;
-    int              Width;
-    int              Height;
+    HGLRC            hRC = 0;
+    WGL_WindowData   MainWindow = {0};
+    int              Width = 0;
+    int              Height = 0;
 
     // To format wchar_t strings with "tmp_fmt".
     static const int tmp_buffer_MAX = 1024;
-    wchar_t buffer[tmp_buffer_MAX];
+    wchar_t buffer[tmp_buffer_MAX] = {0};
     const wchar_t* buffer_error = L"<error>";
 
     const wchar_t* app_name = STR(SMP_APP_NAME);
