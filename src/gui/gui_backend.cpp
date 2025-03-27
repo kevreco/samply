@@ -38,12 +38,6 @@ error "@TODO Handle UNIX-like system"
 
 #endif
 
-struct {
-    int x, y, width, height;
-} rect = {
-    100, 100, 720, 540
-};
-
 // Data stored per platform window
 struct WGL_WindowData { HDC hDC; };
 
@@ -79,6 +73,18 @@ strv gui_backend::identifier()
     return id;
 }
 
+void gui_backend::set_initial_position(int x, int y)
+{
+    initial_x = x;
+    initial_y = y;
+}
+
+void gui_backend::set_initial_size(int width, int height)
+{
+    initial_width = width;
+    initial_height = height;
+}
+
 int gui_backend::show()
 {
     // Create application window
@@ -103,7 +109,13 @@ int gui_backend::show()
         STR(SMP_APP_VERSION_TEXT),
         SMP_APP_VERSION_NUMBER);
 
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, title, WS_OVERLAPPEDWINDOW, rect.x, rect.y, rect.width, rect.height, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(
+        // LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle
+        wc.lpszClassName, title, WS_OVERLAPPEDWINDOW, 
+        // int X, int Y, int nWidth, int nHeight
+        initial_x, initial_y, initial_width, initial_height,
+        // HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam
+        nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize OpenGL
     if (!CreateDeviceWGL(hwnd, &g.MainWindow))
