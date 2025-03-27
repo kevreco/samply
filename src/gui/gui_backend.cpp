@@ -72,7 +72,6 @@ static void CleanupDeviceWGL(HWND hWnd, WGL_WindowData* data);
 static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
-PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
 strv gui_backend::identifier()
 {
@@ -115,9 +114,13 @@ int gui_backend::show()
         return 1;
     }
     wglMakeCurrent(g.MainWindow.hDC, g.hRC);
+
     // Set V-sync
-    wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-    wglSwapIntervalEXT(1);
+    PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+    if (wglSwapIntervalEXT)
+    {
+        wglSwapIntervalEXT(1);
+    }
 
     // Show the window
     ::ShowWindow(hwnd, SW_SHOWDEFAULT);
