@@ -147,8 +147,9 @@ int gui_backend::show()
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    ImGui::ApplyCustomTheme();
-    ImGui::TryLoadCustomFonts();
+    // Setup custom style
+    ImGuiEx::ApplyCustomTheme();
+    ImGuiEx::TryLoadCustomFonts();
 
     // Our state
 

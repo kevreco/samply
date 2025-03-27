@@ -2,7 +2,7 @@
 #define IMGUI_PLUS_EXTENSIONS_H
 
 //
-// NOTE: This file is not part of imgui.
+// NOTE(kevreco) This file is not part of imgui but I'll keep it in the imgui directory since I'm using it for other projects
 //
 
 #define IMGUI_ENABLE_FREETYPE
@@ -15,7 +15,9 @@
 
 #include "IconFontCppHeader/IconsLucid.h"
 
-namespace ImGui {
+namespace ImGuiEx {
+	
+	using namespace ImGui;
 
 	static bool InputTextWithoutLabel(const char* label_id, char* buf, size_t buf_len)
 	{

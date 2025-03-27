@@ -255,7 +255,7 @@ void gui::show_main_window()
 void gui::display_main_window_header()
 {
     ImGui::Text("Command Line:");
-    ImGui::InputTextWithoutLabel("##Command Line", command_line_buffer, max_command_line_char);
+    ImGuiEx::InputTextWithoutLabel("##Command Line", command_line_buffer, max_command_line_char);
 
     bool is_running = sampler_is_running(sampler);
     if (is_running)
@@ -366,7 +366,7 @@ void gui::show_report_tab()
 
     static float horiz_split_pos = avail_size.y / 2.0f; // Position the splitter at the third of the area.
 
-    ImGui::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
+    ImGuiEx::SplitterHorizontal(splitter_width, &horiz_split_pos, 0, avail_size.y, avail_size.x);
     {
         ImGui::BeginChild("Top", ImVec2(avail_size.x, horiz_split_pos));
 
@@ -543,7 +543,7 @@ void gui::show_report_grid()
                     char buf[32];
                     snprintf(buf, 32, ICON_LC_FILE_CODE "##%p", item.symbol_name.data); // ### operator override ID ignoring the preceding label
 
-                    if (ImGui::IconButton(buf))
+                    if (ImGuiEx::IconButton(buf))
                     {
                         jump_to_line = true;
                     }
