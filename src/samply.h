@@ -4,6 +4,7 @@
 #include "strv.h"
 
 #define SMP_APP_NAME "Samply"
+#define SMP_ICON_PATH_LITERAL "./resources/samply.ico"
 
 /* Version of the application. */
 #define SMP_APP_VERSION_NUMBER (4)

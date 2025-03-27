@@ -38,11 +38,6 @@ error "@TODO Handle UNIX-like system"
 
 #endif
 
-#define ICON_PATH_LITERAL "./resources/samply.ico"
-auto app_name = STR(SMP_APP_NAME);
-auto icon_wide_path = STR(ICON_PATH_LITERAL);
-auto icon_utf8_path = ICON_PATH_LITERAL;
-
 struct {
     int x, y, width, height;
 } rect = {
@@ -62,6 +57,10 @@ struct global_data {
     static const int tmp_buffer_MAX = 1024;
     wchar_t buffer[tmp_buffer_MAX];
     const wchar_t* buffer_error = L"<error>";
+
+    const wchar_t* app_name = STR(SMP_APP_NAME);
+    const wchar_t* icon_wide_path = STR(SMP_ICON_PATH_LITERAL);
+    const char* icon_utf8_path = SMP_ICON_PATH_LITERAL;
 };
 
 static global_data g;
@@ -85,13 +84,13 @@ int gui_backend::show()
 {
     // Create application window
     //ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, app_name, nullptr };
+    WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, g.app_name, nullptr };
     
     // Load the icon from a file
-    HICON hIcon = (HICON)LoadImage(NULL, icon_wide_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+    HICON hIcon = (HICON)LoadImage(NULL, g.icon_wide_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
     if (hIcon == NULL)
     {
-        log_error("Could not load icon: %s", icon_utf8_path);
+        log_error("Could not load icon: %s", g.icon_utf8_path);
     }
     else
     {
